@@ -9,8 +9,7 @@
     "dev": "webpack serve --open --config webpack.dev.js"
   },
   "dependencies": {
-    "libnoise-ts": "^0.1.1",
-    "pixi.js": "^6.4.2"
+    "libnoise-ts": "^0.1.1"
   },
   "devDependencies": {
     "html-webpack-plugin": "^5.5.0",
