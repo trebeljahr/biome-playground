@@ -1,52 +1,30 @@
 import "./main.css";
-import { Perlin } from "libnoise-ts/module/generator";
-import { Plane as PlaneBuilder } from "libnoise-ts/builders";
-import { Plane } from "libnoise-ts/model";
-import { biomes } from "./biomePlayground";
+import { biomes, determineBiome } from "./biomePlayground";
+import { map_range } from "./helpers";
+import { humidPlane, tempPlane } from "./noise";
 
-interface PerlinNoiseInput {
-  frequency?: number;
-  persistence?: number;
-  lacunarity?: number;
-  octaves?: number;
-  seed?: number;
-  quality?: number;
+let gridCellSize: number;
+let arr: Uint8ClampedArray;
+
+function getMousePosition(event: MouseEvent) {
+  let rect = canvas.getBoundingClientRect();
+  let x = event.clientX - rect.left;
+  let y = event.clientY - rect.top;
+  console.log("Coordinate x: " + x, "Coordinate y: " + y);
+  return { x, y };
 }
-
-const DEFAULT_PERLIN_FREQUENCY = 1.0;
-const DEFAULT_PERLIN_LACUNARITY = 2.0;
-const DEFAULT_PERLIN_OCTAVE_COUNT = 6;
-const DEFAULT_PERLIN_PERSISTENCE = 0.5;
-const DEFAULT_PERLIN_SEED = 0;
-
-function createPerlin({
-  frequency = DEFAULT_PERLIN_FREQUENCY,
-  lacunarity = DEFAULT_PERLIN_LACUNARITY,
-  octaves = DEFAULT_PERLIN_OCTAVE_COUNT,
-  persistence = DEFAULT_PERLIN_PERSISTENCE,
-  seed = DEFAULT_PERLIN_SEED,
-}: PerlinNoiseInput) {
-  return new Perlin(frequency, lacunarity, octaves, persistence, seed);
-}
-
-const tempPerlin: Perlin = createPerlin({
-  seed: Math.random(),
-  frequency: 0.02,
-  persistence: 0.001,
-});
-
-const width = 16;
-
-export const temperaturePlane = new PlaneBuilder(
-  tempPerlin,
-  width,
-  width,
-  true
-);
-
-const noisePlane = new Plane(tempPerlin);
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+canvas.addEventListener("mousedown", function (e) {
+  let { x, y } = getMousePosition(e);
+
+  const noise1 = tempPlane.getValue(x, y);
+  const noise2 = humidPlane.getValue(x, y);
+
+  const biome = determineBiome(noise1, noise2);
+  console.log(biome.name);
+});
+
 const ctx = canvas.getContext("2d");
 
 console.log(canvas.width);
@@ -54,72 +32,33 @@ console.log(canvas.height);
 console.log(window.innerWidth);
 console.log(window.innerHeight);
 
-const arr = new Uint8ClampedArray(width * width * 4);
-
-function map_range(
-  value: number,
-  low1: number,
-  high1: number,
-  low2: number,
-  high2: number
-) {
-  return low2 + ((high2 - low2) * (value - low1)) / (high1 - low1);
-}
-
-Plane;
-
-temperaturePlane.build();
-
 function drawNoise(offsetX = 0, offsetY = 0) {
-  // temperaturePlane.setBounds(
-  //   offsetX,
-  //   offsetY,
-  //   offsetX + width,
-  //   offsetY + height
-  // );
-  // temperaturePlane.build();
   let noiseArr: number[] = [];
   let iterations = 0;
+  console.log(offsetX, offsetY);
   for (let i = 0; i < arr.length; i += 4) {
     iterations++;
-    const x =
-      ((iterations - 1) % width) +
-      offsetX * width +
-      Number.MIN_SAFE_INTEGER / 2;
-    const y =
-      Math.floor(iterations / width) +
-      offsetY * width +
-      Number.MIN_SAFE_INTEGER / 2;
-    // console.log({ x, y });
-    const noise = noisePlane.getValue(x, y);
+    const x = ((iterations - 1) % gridCellSize) + offsetX * gridCellSize;
+    const y = Math.floor(iterations / gridCellSize) + offsetY * gridCellSize;
+    const noise1 = tempPlane.getValue(x, y);
+    const noise2 = humidPlane.getValue(x, y);
 
-    noiseArr.push(noise);
-    // const noise = temperaturePlane.noiseMap.getValue(x, y);
-    // console.log(noise);
-    const rgb = Math.floor(map_range(noise, 0, 1, 0, 255));
-    // console.log(rgb, iterations);
+    const biome = determineBiome(noise1, noise2);
+    noiseArr.push(noise1);
+    const rgb = Math.floor(map_range(noise1, -1, 1, 0, 255));
 
-    arr[i + 0] = rgb; // R value
-    arr[i + 1] = rgb; // G value
-    arr[i + 2] = rgb; // B value
+    arr[i + 0] = biome?.rgb[0] || rgb; // R value
+    arr[i + 1] = biome?.rgb[1] || rgb; // G value
+    arr[i + 2] = biome?.rgb[2] || rgb; // B value
     arr[i + 3] = 255; // A value
   }
 
-  const imageData = new ImageData(arr, width);
-  ctx.putImageData(imageData, offsetX * width, offsetY * width);
-  // colors.forEach((color, i) => {
-  //   console.log(color);
-  //   ctx.fillStyle = `rgb(${color}, ${color}, ${color})`;
-  //   ctx.fillRect(Math.floor(i / width) * 16, (i % width) * 16, 16, 16);
-  // });
+  const imageData = new ImageData(arr, gridCellSize);
+  ctx.putImageData(imageData, offsetX * gridCellSize, offsetY * gridCellSize);
   return noiseArr;
 }
 
-function compare(a: number[], b: number[]) {
-  return a.every((e, i) => b[i] === e) && b.every((e, i) => a[i] === e);
-}
-
-function drawOutline(x, y, width, height) {
+function drawOutline(x: number, y: number, width: number, height: number) {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 5;
   ctx.strokeRect(x, y, width, height);
@@ -141,23 +80,26 @@ function drawBiomes() {
   drawOutline(0, 0, canvas.width, canvas.height);
 }
 
+const gridCells = 4;
+let lastResizeDone = true;
 function resizeWindow() {
+  // if (!lastResizeDone) return;
+  // lastResizeDone = false;
   canvas.width = document.documentElement.clientWidth;
   canvas.height = document.documentElement.clientHeight;
-  drawBiomes();
-  // for (let i = 0; i < 4 * 16; i++) {
-  //   for (let j = 0; j < 4 * 16; j++) {
-  //     drawNoise(i, j);
-  //   }
-  // }
+  gridCellSize = Math.floor(Math.min(canvas.width, canvas.height) / gridCells);
+  arr = new Uint8ClampedArray(gridCellSize * gridCellSize * 4);
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // const noiseArr3 = drawNoise(2);
-  // console.log(noiseArr);
-  // console.log(noiseArr2);
-  // console.log(noiseArr3);
-
-  // console.log("Same?", compare([...noiseArr], noiseArr2));
-  // console.log("Same?", compare([...noiseArr], noiseArr3));
+  // drawBiomes();
+  // console.log({ width: gridCellSize });
+  for (let i = 0; i < gridCells; i++) {
+    for (let j = 0; j < gridCells; j++) {
+      drawNoise(i, j);
+    }
+  }
+  // lastResizeDone = true;
 }
 
 resizeWindow();

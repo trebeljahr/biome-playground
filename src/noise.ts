@@ -1,0 +1,55 @@
+import { Perlin } from "libnoise-ts/module/generator";
+import Module from "libnoise-ts/module/Module";
+import { Plane } from "libnoise-ts/model";
+
+interface PerlinNoiseInput {
+  frequency?: number;
+  persistence?: number;
+  lacunarity?: number;
+  octaves?: number;
+  seed?: number;
+  quality?: number;
+}
+
+const DEFAULT_PERLIN_FREQUENCY = 1.0;
+const DEFAULT_PERLIN_LACUNARITY = 2.0;
+const DEFAULT_PERLIN_OCTAVE_COUNT = 6;
+const DEFAULT_PERLIN_PERSISTENCE = 0.5;
+const DEFAULT_PERLIN_SEED = 0;
+
+function createPerlin({
+  frequency = DEFAULT_PERLIN_FREQUENCY,
+  lacunarity = DEFAULT_PERLIN_LACUNARITY,
+  octaves = DEFAULT_PERLIN_OCTAVE_COUNT,
+  persistence = DEFAULT_PERLIN_PERSISTENCE,
+  seed = DEFAULT_PERLIN_SEED,
+}: PerlinNoiseInput) {
+  return new Perlin(frequency, lacunarity, octaves, persistence, seed);
+}
+
+const tempPerlin: Perlin = createPerlin({
+  seed: 3000,
+  frequency: 0.004,
+  persistence: 0.001,
+});
+const humidPerlin: Perlin = createPerlin({
+  seed: 6000,
+  frequency: 0.004,
+  persistence: 0.001,
+});
+
+class BetterPlane {
+  private plane: Plane;
+  constructor(noise: Module) {
+    this.plane = new Plane(noise);
+  }
+  getValue(x: number, y: number) {
+    return this.plane.getValue(
+      x + Number.MIN_SAFE_INTEGER / 2,
+      y + Number.MIN_SAFE_INTEGER / 2
+    );
+  }
+}
+
+export const tempPlane = new BetterPlane(tempPerlin);
+export const humidPlane = new BetterPlane(humidPerlin);
