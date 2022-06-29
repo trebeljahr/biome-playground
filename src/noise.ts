@@ -16,7 +16,7 @@ class SimplexAdapter {
     this.simplex = new SimplexNoise(seed);
   }
   getValue(x: number, y: number) {
-    return this.simplex.noise2D(shiftRight(x) / 100, shiftRight(y) / 100);
+    return this.simplex.noise2D(shiftRight(x) / 300, shiftRight(y) / 300);
   }
 }
 
