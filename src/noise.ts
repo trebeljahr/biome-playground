@@ -27,13 +27,13 @@ function createPerlin({
   return new Perlin(frequency, lacunarity, octaves, persistence, seed);
 }
 
-const tempPerlin: Perlin = createPerlin({
+const temperaturePerlin: Perlin = createPerlin({
   seed: 3000,
   frequency: 0.004,
   persistence: 0.01,
   octaves: 12,
 });
-const humidPerlin: Perlin = createPerlin({
+const precipitationPerlin: Perlin = createPerlin({
   seed: 6000,
   frequency: 0.004,
   persistence: 0.1,
@@ -53,5 +53,5 @@ class BetterPlane {
   }
 }
 
-export const tempPlane = new BetterPlane(tempPerlin);
-export const humidPlane = new BetterPlane(humidPerlin);
+export const temperatureNoise = new BetterPlane(temperaturePerlin);
+export const precipitationNoise = new BetterPlane(precipitationPerlin);

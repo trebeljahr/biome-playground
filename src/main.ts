@@ -2,17 +2,20 @@ import "./main.css";
 import {
   biomes,
   determineBiome,
+  highestPrecipitation,
   highestTemperature,
+  lowestPrecipitation,
   lowestTemperature,
 } from "./biomePlayground";
 import { clamp, map_range } from "./helpers";
-import { humidPlane, tempPlane } from "./noise";
+import { precipitationNoise, temperatureNoise } from "./noise";
 import { drawVoronoi } from "./ voronoi";
 import {
   precipitationColorMap,
   RGBAColorMap,
   temperatureColorMap,
 } from "./colorMap";
+import * as dat from "dat.gui";
 
 let gridCellWidth: number;
 let gridCellHeight: number;
@@ -30,8 +33,8 @@ const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 canvas.addEventListener("mousedown", function (e) {
   let { x, y } = getMousePosition(e);
 
-  const noise1 = tempPlane.getValue(x, y);
-  const noise2 = humidPlane.getValue(x, y);
+  const noise1 = temperatureNoise.getValue(x, y);
+  const noise2 = precipitationNoise.getValue(x, y);
 
   const biome = determineBiome(noise1, noise2);
   console.log(biome.name);
@@ -45,14 +48,17 @@ console.log(window.innerWidth);
 console.log(window.innerHeight);
 
 function getBiomeRgb(x: number, y: number) {
-  const noise1 = tempPlane.getValue(x, y);
-  const noise2 = humidPlane.getValue(x, y);
+  const noise1 = temperatureNoise.getValue(x, y);
+  const noise2 = precipitationNoise.getValue(x, y);
 
   const biome = determineBiome(noise1, noise2);
   return biome.rgb;
 }
 
-function getNoiseRgbPicker(noise: typeof tempPlane, colorMap?: RGBAColorMap) {
+function getNoiseRgbPicker(
+  noise: typeof temperatureNoise,
+  colorMap?: RGBAColorMap
+) {
   if (colorMap) {
     console.log(colorMap);
   }
@@ -105,6 +111,42 @@ function drawNoise(pickRgb: ColorPicker, offsetX = 0, offsetY = 0) {
   return noiseArr;
 }
 
+const gui = new dat.GUI({ name: "Biome Playground" });
+
+const parameters: Record<string, { on: boolean; draw: () => void }> = {
+  PrecipitationMap: { on: true, draw: drawPrecipitationMap },
+  TemperatureMap: { on: false, draw: drawTemperatureMap },
+  Voronoi: { on: false, draw: drawVoronoiMap },
+  Biomes: { on: false, draw: drawBiomeMap },
+  BiomeChart: { on: false, draw: drawBiomeDistributionChart },
+};
+
+const stateFolder = gui.addFolder("States");
+
+Object.keys(parameters).forEach((paramName) => {
+  stateFolder
+    .add(parameters[paramName], "on")
+    .name(paramName)
+    .listen()
+    .onChange(() => {
+      setChecked(paramName);
+      clearCanvas();
+    })
+    .updateDisplay()
+    .onFinishChange(drawThings);
+});
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function setChecked(key: string) {
+  for (let param in parameters) {
+    parameters[param].on = false;
+  }
+  parameters[key].on = true;
+}
+
 function drawOutline(
   x: number,
   y: number,
@@ -117,8 +159,28 @@ function drawOutline(
   ctx.strokeRect(x, y, width, height);
 }
 
-function drawBiomeChart() {
-  Object.values(biomes).map(({ temperature, humidity, color }) => {
+function drawVoronoiMap() {
+  drawVoronoi(canvas);
+}
+
+function drawTemperatureMap() {
+  colorNoiseDistribution(
+    getNoiseRgbPicker(temperatureNoise, temperatureColorMap)
+  );
+}
+
+function drawBiomeMap() {
+  colorNoiseDistribution(getBiomeRgb);
+}
+
+function drawPrecipitationMap() {
+  colorNoiseDistribution(
+    getNoiseRgbPicker(precipitationNoise, precipitationColorMap)
+  );
+}
+
+function drawBiomeDistributionChart() {
+  Object.values(biomes).map(({ temperature, precipitation, color }) => {
     const maxTemp = map_range(
       temperature.max,
       lowestTemperature,
@@ -133,8 +195,20 @@ function drawBiomeChart() {
       0,
       canvas.width
     );
-    const maxHumid = map_range(humidity.max, 0, 100, 0, canvas.width);
-    const minHumid = map_range(humidity.min, 0, 100, 0, canvas.width);
+    const maxHumid = map_range(
+      precipitation.max,
+      lowestPrecipitation,
+      highestPrecipitation,
+      0,
+      canvas.width
+    );
+    const minHumid = map_range(
+      precipitation.min,
+      lowestPrecipitation,
+      highestPrecipitation,
+      0,
+      canvas.width
+    );
 
     const y = map_range(
       temperature.min,
@@ -143,7 +217,13 @@ function drawBiomeChart() {
       0,
       canvas.width
     );
-    const x = map_range(humidity.min, 0, 100, 0, canvas.width);
+    const x = map_range(
+      precipitation.min,
+      lowestPrecipitation,
+      highestPrecipitation,
+      0,
+      canvas.width
+    );
 
     drawOutline(x, y, maxHumid - minHumid, maxTemp - minTemp);
     ctx.fillStyle = color;
@@ -162,25 +242,21 @@ function colorNoiseDistribution(colorPicker: ColorPicker) {
   }
 }
 
+function drawThings() {
+  Object.values(parameters).forEach(({ on, draw }) => {
+    if (on) {
+      draw();
+    }
+  });
+}
+
 function resizeWindow() {
-  // if (!lastResizeDone) return;
-  // lastResizeDone = false;
   canvas.width = document.documentElement.clientWidth;
   canvas.height = document.documentElement.clientHeight;
   gridCellWidth = Math.ceil(canvas.width / gridCells);
   gridCellHeight = Math.ceil(canvas.height / gridCells);
   arr = new Uint8ClampedArray(gridCellWidth * gridCellHeight * 4);
-  // ctx.fillStyle = "white";
-  // ctx.fillRect(0, 0, canvas.width, canvas.height);
-  // drawVoronoi(canvas);
-  // drawBiomeChart();
-  // colorNoiseDistribution(getBiomeRgb);
-  // colorNoiseDistribution(getNoiseRgbPicker(tempPlane, temperatureColorMap));
-  colorNoiseDistribution(getNoiseRgbPicker(humidPlane, precipitationColorMap));
-
-  // console.log({ width: gridCellSize });
-
-  // lastResizeDone = true;
+  drawThings();
 }
 
 resizeWindow();

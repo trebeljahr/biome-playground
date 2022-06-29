@@ -7,7 +7,7 @@ interface MinMax {
 
 interface Biome {
   temperature: MinMax;
-  humidity: MinMax;
+  precipitation: MinMax;
   color: string;
   name: string;
   rgb: [number, number, number];
@@ -23,18 +23,22 @@ export function determineBiome(
     lowestTemperature + 1,
     highestTemperature
   );
-  const humidity = clamp(Math.floor(map_range(noise2, -1, 1, 0, 100)), 1, 100);
+  const precipitation = clamp(
+    Math.floor(map_range(noise2, -1, 1, 0, 100)),
+    1,
+    100
+  );
   const biome = biomes.find((biome) => {
     return (
       temperature > biome.temperature.min &&
       temperature <= biome.temperature.max &&
-      humidity > biome.humidity.min &&
-      humidity <= biome.humidity.max
+      precipitation > biome.precipitation.min &&
+      precipitation <= biome.precipitation.max
     );
   });
   if (!biome) {
     if (counter % 1000 === 0) {
-      console.log(noise1, noise2, temperature, humidity);
+      console.log(noise1, noise2, temperature, precipitation);
     }
     counter++;
   }
@@ -44,6 +48,9 @@ export function determineBiome(
 
 export const lowestTemperature = -20;
 export const highestTemperature = 50;
+export const lowestPrecipitation = 0;
+export const highestPrecipitation = 100;
+
 export const biomes: Biome[] = [
   {
     name: "iceDesert",
@@ -51,8 +58,8 @@ export const biomes: Biome[] = [
       min: lowestTemperature,
       max: -10,
     },
-    humidity: {
-      min: 0,
+    precipitation: {
+      min: lowestPrecipitation,
       max: 35,
     },
     color: "lightblue",
@@ -64,7 +71,7 @@ export const biomes: Biome[] = [
       min: lowestTemperature,
       max: -10,
     },
-    humidity: {
+    precipitation: {
       min: 35,
       max: 75,
     },
@@ -77,8 +84,8 @@ export const biomes: Biome[] = [
       min: -10,
       max: 0,
     },
-    humidity: {
-      min: 0,
+    precipitation: {
+      min: lowestPrecipitation,
       max: 75,
     },
     color: "Gainsboro",
@@ -87,11 +94,11 @@ export const biomes: Biome[] = [
   {
     name: "meadow",
     temperature: {
-      min: 0,
+      min: lowestPrecipitation,
       max: 20,
     },
-    humidity: {
-      min: 0,
+    precipitation: {
+      min: lowestPrecipitation,
       max: 35,
     },
     color: "GreenYellow",
@@ -100,10 +107,10 @@ export const biomes: Biome[] = [
   {
     name: "forest",
     temperature: {
-      min: 0,
+      min: lowestPrecipitation,
       max: 20,
     },
-    humidity: {
+    precipitation: {
       min: 35,
       max: 75,
     },
@@ -116,8 +123,8 @@ export const biomes: Biome[] = [
       min: 20,
       max: highestTemperature,
     },
-    humidity: {
-      min: 0,
+    precipitation: {
+      min: lowestPrecipitation,
       max: 40,
     },
     color: "Moccasin",
@@ -129,7 +136,7 @@ export const biomes: Biome[] = [
       min: 20,
       max: highestTemperature,
     },
-    humidity: {
+    precipitation: {
       min: 40,
       max: 75,
     },
@@ -142,7 +149,7 @@ export const biomes: Biome[] = [
       min: lowestTemperature,
       max: highestTemperature,
     },
-    humidity: {
+    precipitation: {
       min: 75,
       max: 80,
     },
@@ -155,9 +162,9 @@ export const biomes: Biome[] = [
       min: lowestTemperature,
       max: highestTemperature,
     },
-    humidity: {
+    precipitation: {
       min: 80,
-      max: 100,
+      max: highestPrecipitation,
     },
     color: "SteelBlue",
     rgb: [70, 130, 180],
