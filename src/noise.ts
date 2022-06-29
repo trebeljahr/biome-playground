@@ -1,8 +1,29 @@
 import { Perlin } from "libnoise-ts/module/generator";
 import Module from "libnoise-ts/module/Module";
 import { Plane } from "libnoise-ts/model";
+import SimplexNoise from "simplex-noise";
 
-interface PerlinNoiseInput {
+export interface NoisePicker {
+  getValue(x: number, y: number): number;
+}
+
+function shiftRight(x: number) {
+  return x + Number.MAX_SAFE_INTEGER / 4;
+}
+class SimplexAdapter {
+  private simplex: SimplexNoise;
+  constructor(seed?: string) {
+    this.simplex = new SimplexNoise(seed);
+  }
+  getValue(x: number, y: number) {
+    return this.simplex.noise2D(shiftRight(x) / 100, shiftRight(y) / 100);
+  }
+}
+
+export const precipitationSimplex = new SimplexAdapter("precipitation");
+export const temperatureSimplex = new SimplexAdapter("temperature");
+
+export interface PerlinNoiseInput {
   frequency?: number;
   persistence?: number;
   lacunarity?: number;
@@ -46,10 +67,7 @@ class BetterPlane {
     this.plane = new Plane(noise);
   }
   getValue(x: number, y: number) {
-    return this.plane.getValue(
-      x + Number.MAX_SAFE_INTEGER / 4,
-      y + Number.MAX_SAFE_INTEGER / 4
-    );
+    return this.plane.getValue(shiftRight(x), shiftRight(y));
   }
 }
 

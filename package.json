@@ -13,7 +13,9 @@
     "d3-delaunay": "^6.0.2",
     "dat.gui": "^0.7.9",
     "libnoise-ts": "^0.1.1",
-    "poisson-disk-sampling": "^2.3.1"
+    "noisejs": "^2.1.0",
+    "poisson-disk-sampling": "^2.3.1",
+    "simplex-noise": "^3.0.1"
   },
   "devDependencies": {
     "@types/colormap": "^2.3.1",
