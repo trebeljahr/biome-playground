@@ -15,3 +15,7 @@ export function clamp(value: number, min: number, max: number) {
 export function compare(a: number[], b: number[]) {
   return a.every((e, i) => b[i] === e) && b.every((e, i) => a[i] === e);
 }
+
+export function randomColor() {
+  return "#" + Math.floor(Math.random() * 16777215).toString(16);
+}

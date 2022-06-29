@@ -9,11 +9,17 @@
     "dev": "webpack serve --open --config webpack.dev.js"
   },
   "dependencies": {
-    "libnoise-ts": "^0.1.1"
+    "colormap": "^2.3.2",
+    "d3-delaunay": "^6.0.2",
+    "libnoise-ts": "^0.1.1",
+    "poisson-disk-sampling": "^2.3.1"
   },
   "devDependencies": {
-    "html-webpack-plugin": "^5.5.0",
+    "@types/colormap": "^2.3.1",
+    "@types/d3-delaunay": "^6.0.1",
+    "@types/poisson-disk-sampling": "^2.2.0",
     "css-loader": "^3.2.0",
+    "html-webpack-plugin": "^5.5.0",
     "source-map-loader": "^0.2.4",
     "style-loader": "^1.0.0",
     "ts-loader": "^9.3.1",

@@ -1,9 +1,21 @@
 import "./main.css";
-import { biomes, determineBiome } from "./biomePlayground";
-import { map_range } from "./helpers";
+import {
+  biomes,
+  determineBiome,
+  highestTemperature,
+  lowestTemperature,
+} from "./biomePlayground";
+import { clamp, map_range } from "./helpers";
 import { humidPlane, tempPlane } from "./noise";
+import { drawVoronoi } from "./ voronoi";
+import {
+  precipitationColorMap,
+  RGBAColorMap,
+  temperatureColorMap,
+} from "./colorMap";
 
-let gridCellSize: number;
+let gridCellWidth: number;
+let gridCellHeight: number;
 let arr: Uint8ClampedArray;
 
 function getMousePosition(event: MouseEvent) {
@@ -32,45 +44,105 @@ console.log(canvas.height);
 console.log(window.innerWidth);
 console.log(window.innerHeight);
 
-function drawNoise(offsetX = 0, offsetY = 0) {
+function getBiomeRgb(x: number, y: number) {
+  const noise1 = tempPlane.getValue(x, y);
+  const noise2 = humidPlane.getValue(x, y);
+
+  const biome = determineBiome(noise1, noise2);
+  return biome.rgb;
+}
+
+function getNoiseRgbPicker(noise: typeof tempPlane, colorMap?: RGBAColorMap) {
+  if (colorMap) {
+    console.log(colorMap);
+  }
+  const picker: ColorPicker = (x, y) => {
+    const noiseVal = map_range(
+      clamp(noise.getValue(x, y), -1, 1),
+      -1,
+      1,
+      0,
+      255
+    );
+    if (colorMap) {
+      try {
+        const [r, g, b] = colorMap[Math.floor(noiseVal)];
+        return [r, g, b];
+      } catch (err) {
+        console.log(Math.floor(noiseVal));
+        throw err;
+      }
+    }
+    return [noiseVal, noiseVal, noiseVal];
+  };
+  return picker;
+}
+
+type ColorPicker = (x: number, y: number) => [number, number, number];
+
+function drawNoise(pickRgb: ColorPicker, offsetX = 0, offsetY = 0) {
   let noiseArr: number[] = [];
   let iterations = 0;
-  console.log(offsetX, offsetY);
   for (let i = 0; i < arr.length; i += 4) {
     iterations++;
-    const x = ((iterations - 1) % gridCellSize) + offsetX * gridCellSize;
-    const y = Math.floor(iterations / gridCellSize) + offsetY * gridCellSize;
-    const noise1 = tempPlane.getValue(x, y);
-    const noise2 = humidPlane.getValue(x, y);
 
-    const biome = determineBiome(noise1, noise2);
-    noiseArr.push(noise1);
-    const rgb = Math.floor(map_range(noise1, -1, 1, 0, 255));
+    const x = ((iterations - 1) % gridCellWidth) + offsetX * gridCellWidth;
+    const y = Math.floor(iterations / gridCellWidth) + offsetY * gridCellHeight;
+    const [r, g, b] = pickRgb(x, y);
 
-    arr[i + 0] = biome?.rgb[0] || rgb; // R value
-    arr[i + 1] = biome?.rgb[1] || rgb; // G value
-    arr[i + 2] = biome?.rgb[2] || rgb; // B value
+    arr[i + 0] = r; // R value
+    arr[i + 1] = g; // G value
+    arr[i + 2] = b; // B value
     arr[i + 3] = 255; // A value
   }
 
-  const imageData = new ImageData(arr, gridCellSize);
-  ctx.putImageData(imageData, offsetX * gridCellSize, offsetY * gridCellSize);
+  const imageData = new ImageData(arr, gridCellWidth, gridCellHeight);
+  ctx.putImageData(
+    imageData,
+    offsetX * gridCellWidth,
+    offsetY * gridCellHeight
+  );
   return noiseArr;
 }
 
-function drawOutline(x: number, y: number, width: number, height: number) {
-  ctx.strokeStyle = "black";
+function drawOutline(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  color?: string
+) {
+  ctx.strokeStyle = color || "black";
   ctx.lineWidth = 5;
   ctx.strokeRect(x, y, width, height);
 }
-function drawBiomes() {
+
+function drawBiomeChart() {
   Object.values(biomes).map(({ temperature, humidity, color }) => {
-    const maxTemp = map_range(temperature.max, -15, 50, 0, canvas.width);
-    const minTemp = map_range(temperature.min, -15, 50, 0, canvas.width);
+    const maxTemp = map_range(
+      temperature.max,
+      lowestTemperature,
+      highestTemperature,
+      0,
+      canvas.width
+    );
+    const minTemp = map_range(
+      temperature.min,
+      lowestTemperature,
+      highestTemperature,
+      0,
+      canvas.width
+    );
     const maxHumid = map_range(humidity.max, 0, 100, 0, canvas.width);
     const minHumid = map_range(humidity.min, 0, 100, 0, canvas.width);
 
-    const y = map_range(temperature.min, -15, 50, 0, canvas.width);
+    const y = map_range(
+      temperature.min,
+      lowestTemperature,
+      highestTemperature,
+      0,
+      canvas.width
+    );
     const x = map_range(humidity.min, 0, 100, 0, canvas.width);
 
     drawOutline(x, y, maxHumid - minHumid, maxTemp - minTemp);
@@ -80,25 +152,34 @@ function drawBiomes() {
   drawOutline(0, 0, canvas.width, canvas.height);
 }
 
-const gridCells = 4;
-let lastResizeDone = true;
+const gridCells = 10;
+
+function colorNoiseDistribution(colorPicker: ColorPicker) {
+  for (let i = 0; i < gridCells; i++) {
+    for (let j = 0; j < gridCells; j++) {
+      drawNoise(colorPicker, i, j);
+    }
+  }
+}
+
 function resizeWindow() {
   // if (!lastResizeDone) return;
   // lastResizeDone = false;
   canvas.width = document.documentElement.clientWidth;
   canvas.height = document.documentElement.clientHeight;
-  gridCellSize = Math.floor(Math.min(canvas.width, canvas.height) / gridCells);
-  arr = new Uint8ClampedArray(gridCellSize * gridCellSize * 4);
-  ctx.fillStyle = "white";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  gridCellWidth = Math.ceil(canvas.width / gridCells);
+  gridCellHeight = Math.ceil(canvas.height / gridCells);
+  arr = new Uint8ClampedArray(gridCellWidth * gridCellHeight * 4);
+  // ctx.fillStyle = "white";
+  // ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // drawVoronoi(canvas);
+  // drawBiomeChart();
+  // colorNoiseDistribution(getBiomeRgb);
+  // colorNoiseDistribution(getNoiseRgbPicker(tempPlane, temperatureColorMap));
+  colorNoiseDistribution(getNoiseRgbPicker(humidPlane, precipitationColorMap));
 
-  // drawBiomes();
   // console.log({ width: gridCellSize });
-  for (let i = 0; i < gridCells; i++) {
-    for (let j = 0; j < gridCells; j++) {
-      drawNoise(i, j);
-    }
-  }
+
   // lastResizeDone = true;
 }
 

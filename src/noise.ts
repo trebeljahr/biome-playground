@@ -30,12 +30,14 @@ function createPerlin({
 const tempPerlin: Perlin = createPerlin({
   seed: 3000,
   frequency: 0.004,
-  persistence: 0.001,
+  persistence: 0.01,
+  octaves: 12,
 });
 const humidPerlin: Perlin = createPerlin({
   seed: 6000,
   frequency: 0.004,
-  persistence: 0.001,
+  persistence: 0.1,
+  octaves: 12,
 });
 
 class BetterPlane {
@@ -45,8 +47,8 @@ class BetterPlane {
   }
   getValue(x: number, y: number) {
     return this.plane.getValue(
-      x + Number.MIN_SAFE_INTEGER / 2,
-      y + Number.MIN_SAFE_INTEGER / 2
+      x + Number.MAX_SAFE_INTEGER / 4,
+      y + Number.MAX_SAFE_INTEGER / 4
     );
   }
 }

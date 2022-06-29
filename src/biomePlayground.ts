@@ -19,9 +19,9 @@ export function determineBiome(
   noise2: number
 ): Biome | undefined {
   const temperature = clamp(
-    Math.floor(map_range(noise1, -1, 1, -15, 50)),
-    -14,
-    50
+    Math.floor(map_range(noise1, -1, 1, lowestTemperature, highestTemperature)),
+    lowestTemperature + 1,
+    highestTemperature
   );
   const humidity = clamp(Math.floor(map_range(noise2, -1, 1, 0, 100)), 1, 100);
   const biome = biomes.find((biome) => {
@@ -42,16 +42,18 @@ export function determineBiome(
   return biome;
 }
 
+export const lowestTemperature = -20;
+export const highestTemperature = 50;
 export const biomes: Biome[] = [
   {
     name: "iceDesert",
     temperature: {
-      min: -15,
-      max: 0,
+      min: lowestTemperature,
+      max: -10,
     },
     humidity: {
       min: 0,
-      max: 20,
+      max: 35,
     },
     color: "lightblue",
     rgb: [173, 216, 230],
@@ -59,12 +61,12 @@ export const biomes: Biome[] = [
   {
     name: "tundra",
     temperature: {
-      min: -15,
-      max: 0,
+      min: lowestTemperature,
+      max: -10,
     },
     humidity: {
-      min: 20,
-      max: 40,
+      min: 35,
+      max: 75,
     },
     color: "aquamarine",
     rgb: [127, 255, 212],
@@ -72,11 +74,11 @@ export const biomes: Biome[] = [
   {
     name: "snow",
     temperature: {
-      min: -15,
+      min: -10,
       max: 0,
     },
     humidity: {
-      min: 40,
+      min: 0,
       max: 75,
     },
     color: "Gainsboro",
@@ -112,7 +114,7 @@ export const biomes: Biome[] = [
     name: "desert",
     temperature: {
       min: 20,
-      max: 50,
+      max: highestTemperature,
     },
     humidity: {
       min: 0,
@@ -125,7 +127,7 @@ export const biomes: Biome[] = [
     name: "rainforest",
     temperature: {
       min: 20,
-      max: 50,
+      max: highestTemperature,
     },
     humidity: {
       min: 40,
@@ -137,8 +139,8 @@ export const biomes: Biome[] = [
   {
     name: "beach",
     temperature: {
-      min: -15,
-      max: 50,
+      min: lowestTemperature,
+      max: highestTemperature,
     },
     humidity: {
       min: 75,
@@ -150,8 +152,8 @@ export const biomes: Biome[] = [
   {
     name: "ocean",
     temperature: {
-      min: -15,
-      max: 50,
+      min: lowestTemperature,
+      max: highestTemperature,
     },
     humidity: {
       min: 80,
