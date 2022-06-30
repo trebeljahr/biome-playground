@@ -1,5 +1,10 @@
 import { Delaunay, Voronoi } from "d3-delaunay";
-import { initPointsPoisson, Point2D, subdividePoints } from "./helpers";
+import {
+  drawCircle,
+  initPointsPoisson,
+  Point2D,
+  subdividePoints,
+} from "./helpers";
 
 interface Renderer {
   render(ctx: CanvasRenderingContext2D): void;
@@ -12,6 +17,7 @@ function drawSimple(
 ) {
   ctx.beginPath();
   ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
   thingToRender.render(ctx);
   ctx.stroke();
   ctx.closePath();
@@ -19,18 +25,24 @@ function drawSimple(
 
 export function drawVoronoi(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "lightgrey";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const points = initPointsPoisson(canvas.width, canvas.height);
   const delaunay = Delaunay.from(points);
   const voronoi = delaunay.voronoi([0, 0, canvas.width, canvas.height]);
   const polys = [...voronoi.cellPolygons()];
+  drawSimple(voronoi, ctx, "white");
 
-  drawSimple(voronoi, ctx, "red");
+  polys.forEach((poly) => {
+    poly.forEach(([x, y]) => {
+      drawCircle(ctx, x, y, { color: "blue", radius: 4 });
+    });
+  });
   // drawSimple(delaunay, ctx);
   ctx.beginPath();
-  ctx.fillStyle = "blue";
+  ctx.fillStyle = "red";
   delaunay.renderPoints(ctx, 4);
-  ctx.stroke();
   ctx.fill();
   ctx.closePath();
 

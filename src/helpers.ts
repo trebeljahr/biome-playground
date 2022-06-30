@@ -33,10 +33,15 @@ export function subdivideEdge([x1, y1]: Point2D, [x2, y2]: Point2D) {
   return newPoints;
 }
 
-export function drawDot(ctx: CanvasRenderingContext2D, x: number, y: number) {
+export function drawCircle(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  { radius = 1, color = "black" }
+) {
   ctx.beginPath();
-  ctx.fillStyle = "black";
-  ctx.arc(x, y, 1, 0, 2 * Math.PI);
+  ctx.fillStyle = color;
+  ctx.arc(x, y, radius, 0, 2 * Math.PI);
   ctx.fill();
   ctx.closePath();
 }
