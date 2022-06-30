@@ -10,7 +10,7 @@ interface Biome {
   precipitation: MinMax;
   color: string;
   name: string;
-  rgb: [number, number, number];
+  rgb: [number, number, number, number];
 }
 
 let counter = 0;
@@ -63,7 +63,7 @@ export const biomes: Biome[] = [
       max: 35,
     },
     color: "lightblue",
-    rgb: [173, 216, 230],
+    rgb: [173, 216, 230, 1],
   },
   {
     name: "tundra",
@@ -76,7 +76,7 @@ export const biomes: Biome[] = [
       max: 75,
     },
     color: "aquamarine",
-    rgb: [127, 255, 212],
+    rgb: [127, 255, 212, 1],
   },
   {
     name: "snow",
@@ -89,7 +89,7 @@ export const biomes: Biome[] = [
       max: 75,
     },
     color: "Gainsboro",
-    rgb: [220, 220, 220],
+    rgb: [220, 220, 220, 1],
   },
   {
     name: "meadow",
@@ -102,7 +102,7 @@ export const biomes: Biome[] = [
       max: 35,
     },
     color: "GreenYellow",
-    rgb: [173, 255, 47],
+    rgb: [173, 255, 47, 1],
   },
   {
     name: "forest",
@@ -115,7 +115,7 @@ export const biomes: Biome[] = [
       max: 75,
     },
     color: "ForestGreen",
-    rgb: [34, 139, 34],
+    rgb: [34, 139, 34, 1],
   },
   {
     name: "desert",
@@ -128,7 +128,7 @@ export const biomes: Biome[] = [
       max: 40,
     },
     color: "Moccasin",
-    rgb: [255, 228, 181],
+    rgb: [255, 228, 181, 1],
   },
   {
     name: "rainforest",
@@ -141,7 +141,7 @@ export const biomes: Biome[] = [
       max: 75,
     },
     color: "DarkGreen",
-    rgb: [1, 100, 1],
+    rgb: [1, 100, 1, 1],
   },
   {
     name: "beach",
@@ -154,7 +154,7 @@ export const biomes: Biome[] = [
       max: 80,
     },
     color: "LemonChiffon",
-    rgb: [255, 250, 205],
+    rgb: [255, 250, 205, 1],
   },
   {
     name: "ocean",
@@ -167,7 +167,7 @@ export const biomes: Biome[] = [
       max: highestPrecipitation,
     },
     color: "SteelBlue",
-    rgb: [70, 130, 180],
+    rgb: [70, 130, 180, 1],
   },
 ];
 

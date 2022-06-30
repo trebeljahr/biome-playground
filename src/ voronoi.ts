@@ -7,6 +7,7 @@ import {
   subdividePoints,
 } from "./helpers";
 import { precipitationColorMap, temperatureColorMap } from "./colorMap";
+import { getBiomeRgb, getBiomeRgba } from "./colorPicker";
 
 interface Renderer {
   render(ctx: CanvasRenderingContext2D): void;
@@ -84,7 +85,7 @@ function drawCellColors(
       let vertices = edgesAroundPoint(delaunay, e).map(
         (e) => computeCentroids(delaunay)[triangleOfEdge(e)]
       );
-      ctx.fillStyle = colorFn(r);
+      ctx.strokeStyle = ctx.fillStyle = colorFn(r);
       ctx.beginPath();
       const [xStart, yStart] = vertices[0];
       ctx.moveTo(xStart, yStart);
@@ -93,6 +94,7 @@ function drawCellColors(
         ctx.lineTo(x, y);
       }
       ctx.fill();
+      ctx.stroke();
       ctx.closePath();
     }
   }
@@ -106,10 +108,23 @@ function colorBasedOnMap(
     const colorMapIndex = Math.floor(
       map_range(i, 0, delaunay.triangles.length, 0, temperatureColorMap.length)
     );
-    console.log(colorMapIndex);
-    const [r, g, b, a] = colorMap[colorMapIndex];
-    console.log(r, g, b, a);
-    return `rgba(${r},${g},${b},${a})`;
+    return convertRGBAToStringRGBA(colorMap[colorMapIndex]);
+  };
+}
+
+function convertRGBAToStringRGBA([r, g, b, a]: [
+  number,
+  number,
+  number,
+  number
+]) {
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function colorBasedOnBiome(points: Point2D[]) {
+  return function biomeColor(r: number) {
+    const [x, y] = points[r];
+    return convertRGBAToStringRGBA(getBiomeRgba(x, y));
   };
 }
 
@@ -125,11 +140,11 @@ export function drawVoronoi(canvas: HTMLCanvasElement) {
   const delaunay: Delaunay<Point2D> = Delaunay.from(points);
   // drawSimple(delaunay, ctx);
 
-  const centroids = computeCentroids(delaunay);
-  drawCellBoundaries(ctx, delaunay, centroids);
-  centroids.forEach(([x, y]) => {
-    drawCircle(ctx, x, y, { color: "blue", radius: 4 });
-  });
+  // const centroids = computeCentroids(delaunay);
+  // drawCellBoundaries(ctx, delaunay, centroids);
+  // centroids.forEach(([x, y]) => {
+  //   drawCircle(ctx, x, y, { color: "blue", radius: 4 });
+  // });
 
   // const voronoi = delaunay.voronoi([0, 0, width, height]);
   // drawSimple(voronoi, ctx, "white");
@@ -141,17 +156,13 @@ export function drawVoronoi(canvas: HTMLCanvasElement) {
   //   });
   // });
 
-  ctx.beginPath();
-  ctx.fillStyle = "red";
-  delaunay.renderPoints(ctx, 4);
-  ctx.fill();
-  ctx.closePath();
+  // ctx.beginPath();
+  // ctx.fillStyle = "red";
+  // delaunay.renderPoints(ctx, 4);
+  // ctx.fill();
+  // ctx.closePath();
 
-  drawCellColors(
-    ctx,
-    delaunay,
-    colorBasedOnMap(delaunay, precipitationColorMap)
-  );
+  drawCellColors(ctx, delaunay, colorBasedOnBiome(points));
 
   // const subdividedPolys = polys.slice(0, 5).map((poly) => {
   //   return subdividePoints(poly);

@@ -22,6 +22,13 @@ import {
   temperatureColorMap,
 } from "./colorMap";
 import * as dat from "dat.gui";
+import {
+  ColorPicker,
+  getBiomeRgb,
+  getNoiseRgbPicker,
+  getPrecipitationRgb,
+  getTemperatureRgb,
+} from "./colorPicker";
 
 let gridCellWidth: number;
 let gridCellHeight: number;
@@ -52,42 +59,6 @@ console.log(canvas.width);
 console.log(canvas.height);
 console.log(window.innerWidth);
 console.log(window.innerHeight);
-
-function getBiomeRgb(x: number, y: number) {
-  const noise1 = temperatureMap.getValue(x, y);
-  const noise2 = precipitationMap.getValue(x, y);
-
-  const biome = determineBiome(noise1, noise2);
-  return biome.rgb;
-}
-
-function getNoiseRgbPicker(noise: NoisePicker, colorMap?: RGBAColorMap) {
-  if (colorMap) {
-    console.log(colorMap);
-  }
-  const picker: ColorPicker = (x, y) => {
-    const noiseVal = map_range(
-      clamp(noise.getValue(x, y), -1, 1),
-      -1,
-      1,
-      0,
-      255
-    );
-    if (colorMap) {
-      try {
-        const [r, g, b] = colorMap[Math.floor(noiseVal)];
-        return [r, g, b];
-      } catch (err) {
-        console.log(Math.floor(noiseVal));
-        throw err;
-      }
-    }
-    return [noiseVal, noiseVal, noiseVal];
-  };
-  return picker;
-}
-
-type ColorPicker = (x: number, y: number) => [number, number, number];
 
 function drawNoise(pickRgb: ColorPicker, offsetX = 0, offsetY = 0) {
   let noiseArr: number[] = [];
@@ -167,15 +138,11 @@ function drawVoronoiMap() {
 }
 
 function drawTemperatureMap() {
-  colorNoiseDistribution(
-    getNoiseRgbPicker(temperatureMap, temperatureColorMap)
-  );
+  colorNoiseDistribution(getTemperatureRgb);
 }
 
 function drawPrecipitationMap() {
-  colorNoiseDistribution(
-    getNoiseRgbPicker(precipitationMap, precipitationColorMap)
-  );
+  colorNoiseDistribution(getPrecipitationRgb);
 }
 
 function drawBiomeMap() {
