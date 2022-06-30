@@ -1,5 +1,5 @@
 import { Delaunay, Voronoi } from "d3-delaunay";
-import { map_range } from "./helpers";
+import { findCircumCenter, map_range, Triangle } from "./helpers";
 import {
   drawCircle,
   initPointsPoisson,
@@ -52,7 +52,6 @@ function drawCellBoundaries(
   }
 }
 
-type Triangle = [Point2D, Point2D, Point2D];
 function computeCentroid(triangle: Triangle) {
   const [[x1, y1], [x2, y2], [x3, y3]] = triangle;
   const centroid: Point2D = [(x1 + x2 + x3) / 3, (y1 + y2 + y3) / 3];
@@ -225,20 +224,20 @@ export function drawVoronoi(
       ]);
       // drawSimple(voronoi, ctx);
       const polys = [...voronoi.cellPolygons()];
-      const centroids = computeCentroids(delaunay);
-      const currentColor = convertRGBAToStringRGBA(
-        temperatureColorMap[colorIndex]
-      );
-      colorIndex = (colorIndex + 15) % temperatureColorMap.length;
-      centroids.forEach(([x, y]) => {
-        drawCircle(ctx, x, y, { color: currentColor, radius: 4 });
-      });
+      // const centroids = computeCentroids(delaunay);
+      // const currentColor = convertRGBAToStringRGBA(
+      //   temperatureColorMap[colorIndex]
+      // );
+      // colorIndex = (colorIndex + 15) % temperatureColorMap.length;
+      // centroids.forEach(([x, y]) => {
+      //   drawCircle(ctx, x, y, { color: currentColor, radius: 4 });
+      // });
       polys.forEach((poly, i) => {
         console.log(poly);
         console.log(poly.index);
         const triangle = delaunay.trianglePolygon(poly.index) as Triangle;
         console.log(triangle);
-        const [x, y] = computeCentroid(triangle);
+        const [x, y] = findCircumCenter(triangle);
         ctx.fillStyle = ctx.strokeStyle = convertRGBAToStringRGBA(
           getBiomeRgba(x, y)
         );
@@ -252,7 +251,7 @@ export function drawVoronoi(
           ctx.lineTo(x, y);
         }
         ctx.stroke();
-        // ctx.fill();
+        ctx.fill();
         ctx.closePath();
 
         // poly.forEach(([x, y]) => {
