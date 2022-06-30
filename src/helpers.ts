@@ -135,6 +135,12 @@ function perpendicularBisectorFromLine(P, Q, a, b, c) {
   return [a, b, c];
 }
 
+export function groupByN<T>(n: number, data: T[]) {
+  let result: T[][] = [];
+  for (let i = 0; i < data.length; i += n) result.push(data.slice(i, i + n));
+  return result;
+}
+
 // Returns the intersection point of two lines
 function lineLineIntersection(a1, b1, c1, a2, b2, c2) {
   let determinant = a1 * b2 - a2 * b1;

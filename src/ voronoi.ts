@@ -1,5 +1,5 @@
 import { Delaunay, Voronoi } from "d3-delaunay";
-import { findCircumCenter, map_range, Triangle } from "./helpers";
+import { findCircumCenter, groupByN, map_range, Triangle } from "./helpers";
 import {
   drawCircle,
   initPointsPoisson,
@@ -100,6 +100,7 @@ function drawCellColors(
         ctx.lineTo(x, y);
       }
       ctx.fill();
+      ctx.strokeStyle = "black";
       ctx.stroke();
       ctx.closePath();
     }
@@ -172,8 +173,6 @@ document.addEventListener("keypress", (event) => {
 
 let allPoints: Record<string, Point2D[]> = {};
 
-let colorIndex = 0;
-let needsRendering: string[] = [];
 export function drawVoronoi(
   canvas: HTMLCanvasElement,
   mode: VoronoiModes = VoronoiModes.Centroid
@@ -191,7 +190,6 @@ export function drawVoronoi(
     for (let j = lowerEdge; j <= upperEdge; j++) {
       const key = `${i},${j}`;
       if (!allPoints[key]) {
-        needsRendering.push(key);
         allPoints[key] = initPointsPoisson(width, height).map(
           ([x, y]) => [x + i * width, y + j * height] as Point2D
         );
@@ -199,7 +197,7 @@ export function drawVoronoi(
     }
   }
 
-  needsRendering.forEach((key) => {
+  Object.keys(allPoints).forEach((key) => {
     const [xOff, yOff] = key.split(",").map((strNum) => parseInt(strNum));
     if (
       xOff > lowerEdge &&
@@ -216,48 +214,57 @@ export function drawVoronoi(
         }
       }
       const delaunay: Delaunay<Point2D> = Delaunay.from(points);
-      const voronoi = delaunay.voronoi([
-        width * xOff,
-        height * yOff,
-        width * (xOff + 1),
-        height * (yOff + 1),
-      ]);
-      // drawSimple(voronoi, ctx);
-      const polys = [...voronoi.cellPolygons()];
-      // const centroids = computeCentroids(delaunay);
-      // const currentColor = convertRGBAToStringRGBA(
-      //   temperatureColorMap[colorIndex]
-      // );
-      // colorIndex = (colorIndex + 15) % temperatureColorMap.length;
-      // centroids.forEach(([x, y]) => {
-      //   drawCircle(ctx, x, y, { color: currentColor, radius: 4 });
+
+      drawCellColors(ctx, delaunay, colorBasedOnBiome(points));
+
+      // const voronoi = delaunay.voronoi([
+      //   width * xOff,
+      //   height * yOff,
+      //   width * (xOff + 1),
+      //   height * (yOff + 1),
+      // ]);
+      // // drawSimple(voronoi, ctx);
+      // const polys = [...voronoi.cellPolygons()];
+
+      // polys.forEach((poly, i) => {
+      //   console.log(poly);
+      //   console.log(poly.index, i);
+      //   console.log(
+      //     points.length,
+      //     polys.length,
+      //     [...delaunay.trianglePolygons()].length,
+      //     delaunay.points.length,
+      //     voronoi.circumcenters.length,
+      //     delaunay.hullPolygon().length,
+      //     groupByN(2, delaunay.points as number[]).length
+      //   );
+
+      //   // const triangle = delaunay.trianglePolygon(poly.index) as Triangle;
+      //   // console.log(triangle);
+      //   const [x, y] = poly[0];
+      //   console.log(x, y);
+      //   // drawCircle(ctx, x, y, { radius: 5, color: "blue" });
+      //   ctx.fillStyle = ctx.strokeStyle = convertRGBAToStringRGBA(
+      //     getBiomeRgba(x, y)
+      //   );
+      //   ctx.beginPath();
+
+      //   const [startX, startY] = poly[0];
+      //   ctx.moveTo(startX, startY);
+
+      //   for (let [x, y] of poly) {
+      //     ctx.lineWidth = 3;
+      //     ctx.lineTo(x, y);
+      //   }
+      //   ctx.strokeStyle = "black";
+      //   ctx.stroke();
+      //   ctx.fill();
+      //   ctx.closePath();
+
+      //   poly.forEach(([x, y]) => {
+      //     drawCircle(ctx, x, y, { color: "blue", radius: 4 });
+      //   });
       // });
-      polys.forEach((poly, i) => {
-        console.log(poly);
-        console.log(poly.index);
-        const triangle = delaunay.trianglePolygon(poly.index) as Triangle;
-        console.log(triangle);
-        const [x, y] = findCircumCenter(triangle);
-        ctx.fillStyle = ctx.strokeStyle = convertRGBAToStringRGBA(
-          getBiomeRgba(x, y)
-        );
-        ctx.beginPath();
-
-        const [startX, startY] = poly[0];
-        ctx.moveTo(startX, startY);
-
-        for (let [x, y] of poly) {
-          ctx.lineWidth = 3;
-          ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-        ctx.fill();
-        ctx.closePath();
-
-        // poly.forEach(([x, y]) => {
-        //   drawCircle(ctx, x, y, { color: "blue", radius: 4 });
-        // });
-      });
 
       // delaunay.points.forEach() {
 
@@ -266,7 +273,6 @@ export function drawVoronoi(
       // drawCellBoundaries(ctx, delaunay, centroids, "green");
     }
   });
-  needsRendering = [];
 
   // const points = initPointsPoisson(width, height).map(
   //   ([x, y]) => [x + width, y + height] as Point2D
