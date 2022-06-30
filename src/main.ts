@@ -11,9 +11,9 @@ import { clamp, map_range } from "./helpers";
 import {
   NoisePicker,
   precipitationNoise,
-  precipitationSimplex,
+  precipitationMap,
   temperatureNoise,
-  temperatureSimplex,
+  temperatureMap,
 } from "./noise";
 import { drawVoronoi } from "./ voronoi";
 import {
@@ -54,8 +54,8 @@ console.log(window.innerWidth);
 console.log(window.innerHeight);
 
 function getBiomeRgb(x: number, y: number) {
-  const noise1 = temperatureSimplex.getValue(x, y);
-  const noise2 = precipitationSimplex.getValue(x, y);
+  const noise1 = temperatureMap.getValue(x, y);
+  const noise2 = precipitationMap.getValue(x, y);
 
   const biome = determineBiome(noise1, noise2);
   return biome.rgb;
@@ -117,9 +117,9 @@ function drawNoise(pickRgb: ColorPicker, offsetX = 0, offsetY = 0) {
 const gui = new dat.GUI({ name: "Biome Playground" });
 
 const parameters: Record<string, { on: boolean; draw: () => void }> = {
-  PrecipitationMap: { on: true, draw: drawPrecipitationMap },
+  PrecipitationMap: { on: false, draw: drawPrecipitationMap },
   TemperatureMap: { on: false, draw: drawTemperatureMap },
-  Voronoi: { on: false, draw: drawVoronoiMap },
+  Voronoi: { on: true, draw: drawVoronoiMap },
   Biomes: { on: false, draw: drawBiomeMap },
   BiomeChart: { on: false, draw: drawBiomeDistributionChart },
 };
@@ -168,13 +168,13 @@ function drawVoronoiMap() {
 
 function drawTemperatureMap() {
   colorNoiseDistribution(
-    getNoiseRgbPicker(temperatureSimplex, temperatureColorMap)
+    getNoiseRgbPicker(temperatureMap, temperatureColorMap)
   );
 }
 
 function drawPrecipitationMap() {
   colorNoiseDistribution(
-    getNoiseRgbPicker(precipitationSimplex, precipitationColorMap)
+    getNoiseRgbPicker(precipitationMap, precipitationColorMap)
   );
 }
 

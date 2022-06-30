@@ -12,16 +12,31 @@ function shiftRight(x: number) {
 }
 class SimplexAdapter {
   private simplex: SimplexNoise;
-  constructor(seed?: string) {
+  private scale: number;
+  constructor({ seed, scale = 300 }: { seed?: string; scale?: number }) {
     this.simplex = new SimplexNoise(seed);
+    this.scale = scale;
   }
   getValue(x: number, y: number) {
-    return this.simplex.noise2D(shiftRight(x) / 300, shiftRight(y) / 300);
+    return this.simplex.noise2D(
+      shiftRight(x) / this.scale,
+      shiftRight(y) / this.scale
+    );
   }
 }
 
-export const precipitationSimplex = new SimplexAdapter("precipitation");
-export const temperatureSimplex = new SimplexAdapter("temperature");
+export const precipitationMap = new SimplexAdapter({
+  seed: "precipitation",
+});
+export const temperatureMap = new SimplexAdapter({ seed: "temperature" });
+export const displacementMap1 = new SimplexAdapter({
+  seed: "displace1",
+  scale: 3,
+});
+export const displacementMap2 = new SimplexAdapter({
+  seed: "displace2",
+  scale: 3,
+});
 
 export interface PerlinNoiseInput {
   frequency?: number;
