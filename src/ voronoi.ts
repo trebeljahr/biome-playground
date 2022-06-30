@@ -23,14 +23,55 @@ function drawSimple(
   ctx.closePath();
 }
 
+function triangleOfEdge(e) {
+  return Math.floor(e / 3);
+}
+
+function drawCellBoundaries(
+  ctx: CanvasRenderingContext2D,
+  delaunay: Delaunay<Point2D>,
+  providedCenters?: Point2D[]
+) {
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "yellow";
+  const centers = providedCenters || computeCentroids(delaunay);
+  for (let e = 0; e < delaunay.halfedges.length; e++) {
+    if (e < delaunay.halfedges[e]) {
+      const [x1, y1] = centers[triangleOfEdge(e)];
+      const [x2, y2] = centers[triangleOfEdge(delaunay.halfedges[e])];
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+  }
+}
+
+function computeCentroids(delaunay: Delaunay<Point2D>) {
+  return [...delaunay.trianglePolygons()].map((triangle) => {
+    const [[x1, y1], [x2, y2], [x3, y3]] = triangle;
+    const centroid: Point2D = [(x1 + x2 + x3) / 3, (y1 + y2 + y3) / 3];
+    return centroid;
+  });
+}
+
 export function drawVoronoi(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "lightgrey";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const points = initPointsPoisson(canvas.width, canvas.height);
-  const delaunay = Delaunay.from(points);
-  const voronoi = delaunay.voronoi([0, 0, canvas.width, canvas.height]);
+  const [width, height] = [canvas.width * 2, canvas.height * 2];
+  const points = initPointsPoisson(width, height).map(
+    ([x, y]) => [x - canvas.width * 0.5, y - canvas.height * 0.5] as Point2D
+  );
+  const delaunay: Delaunay<Point2D> = Delaunay.from(points);
+  const centroids = computeCentroids(delaunay);
+  centroids.forEach(([x, y]) => {
+    drawCircle(ctx, x, y, { color: "green", radius: 4 });
+  });
+  drawCellBoundaries(ctx, delaunay, centroids);
+
+  const voronoi = delaunay.voronoi([0, 0, width, height]);
   const polys = [...voronoi.cellPolygons()];
   drawSimple(voronoi, ctx, "white");
 
@@ -39,7 +80,7 @@ export function drawVoronoi(canvas: HTMLCanvasElement) {
       drawCircle(ctx, x, y, { color: "blue", radius: 4 });
     });
   });
-  // drawSimple(delaunay, ctx);
+  drawSimple(delaunay, ctx);
   ctx.beginPath();
   ctx.fillStyle = "red";
   delaunay.renderPoints(ctx, 4);
