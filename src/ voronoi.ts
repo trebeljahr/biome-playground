@@ -173,12 +173,14 @@ document.addEventListener("keypress", (event) => {
 
 let allPoints: Record<string, Point2D[]> = {};
 
+let colorIndex = 0;
+let needsRendering: string[] = [];
 export function drawVoronoi(
   canvas: HTMLCanvasElement,
   mode: VoronoiModes = VoronoiModes.Centroid
 ) {
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "lightgrey";
+  ctx.fillStyle = "white";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const [width, height] = [
@@ -188,15 +190,17 @@ export function drawVoronoi(
 
   for (let i = lowerEdge; i <= upperEdge; i++) {
     for (let j = lowerEdge; j <= upperEdge; j++) {
-      if (!allPoints[`${i},${j}`]) {
-        allPoints[`${i},${j}`] = initPointsPoisson(width, height).map(
+      const key = `${i},${j}`;
+      if (!allPoints[key]) {
+        needsRendering.push(key);
+        allPoints[key] = initPointsPoisson(width, height).map(
           ([x, y]) => [x + i * width, y + j * height] as Point2D
         );
       }
     }
   }
 
-  Object.keys(allPoints).map((key) => {
+  needsRendering.forEach((key) => {
     const [xOff, yOff] = key.split(",").map((strNum) => parseInt(strNum));
     if (
       xOff > lowerEdge &&
@@ -221,6 +225,14 @@ export function drawVoronoi(
       ]);
       // drawSimple(voronoi, ctx);
       const polys = [...voronoi.cellPolygons()];
+      const centroids = computeCentroids(delaunay);
+      const currentColor = convertRGBAToStringRGBA(
+        temperatureColorMap[colorIndex]
+      );
+      colorIndex = (colorIndex + 15) % temperatureColorMap.length;
+      centroids.forEach(([x, y]) => {
+        drawCircle(ctx, x, y, { color: currentColor, radius: 4 });
+      });
       polys.forEach((poly, i) => {
         console.log(poly);
         console.log(poly.index);
@@ -236,11 +248,11 @@ export function drawVoronoi(
         ctx.moveTo(startX, startY);
 
         for (let [x, y] of poly) {
-          ctx.lineWidth = 1;
+          ctx.lineWidth = 3;
           ctx.lineTo(x, y);
         }
         ctx.stroke();
-        ctx.fill();
+        // ctx.fill();
         ctx.closePath();
 
         // poly.forEach(([x, y]) => {
@@ -255,6 +267,7 @@ export function drawVoronoi(
       // drawCellBoundaries(ctx, delaunay, centroids, "green");
     }
   });
+  needsRendering = [];
 
   // const points = initPointsPoisson(width, height).map(
   //   ([x, y]) => [x + width, y + height] as Point2D
