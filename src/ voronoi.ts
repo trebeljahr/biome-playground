@@ -1,10 +1,12 @@
 import { Delaunay, Voronoi } from "d3-delaunay";
+import { map_range } from "./helpers";
 import {
   drawCircle,
   initPointsPoisson,
   Point2D,
   subdividePoints,
 } from "./helpers";
+import { precipitationColorMap, temperatureColorMap } from "./colorMap";
 
 interface Renderer {
   render(ctx: CanvasRenderingContext2D): void;
@@ -32,8 +34,8 @@ function drawCellBoundaries(
   delaunay: Delaunay<Point2D>,
   providedCenters?: Point2D[]
 ) {
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "yellow";
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "white";
   const centers = providedCenters || computeCentroids(delaunay);
   for (let e = 0; e < delaunay.halfedges.length; e++) {
     if (e < delaunay.halfedges[e]) {
@@ -54,6 +56,62 @@ function computeCentroids(delaunay: Delaunay<Point2D>) {
     return centroid;
   });
 }
+function nextHalfedge(e: number) {
+  return e % 3 === 2 ? e - 2 : e + 1;
+}
+
+function edgesAroundPoint(delaunay: Delaunay<Point2D>, start: number) {
+  const result = [];
+  let incoming = start;
+  do {
+    result.push(incoming);
+    const outgoing = nextHalfedge(incoming);
+    incoming = delaunay.halfedges[outgoing];
+  } while (incoming !== -1 && incoming !== start);
+  return result;
+}
+
+function drawCellColors(
+  ctx: CanvasRenderingContext2D,
+  delaunay: Delaunay<Point2D>,
+  colorFn: (index: number) => string
+) {
+  let seen = new Set(); // of region ids
+  for (let e = 0; e < delaunay.halfedges.length; e++) {
+    const r = delaunay.triangles[nextHalfedge(e)];
+    if (!seen.has(r)) {
+      seen.add(r);
+      let vertices = edgesAroundPoint(delaunay, e).map(
+        (e) => computeCentroids(delaunay)[triangleOfEdge(e)]
+      );
+      ctx.fillStyle = colorFn(r);
+      ctx.beginPath();
+      const [xStart, yStart] = vertices[0];
+      ctx.moveTo(xStart, yStart);
+      for (let i = 1; i < vertices.length; i++) {
+        const [x, y] = vertices[i];
+        ctx.lineTo(x, y);
+      }
+      ctx.fill();
+      ctx.closePath();
+    }
+  }
+}
+
+function colorBasedOnMap(
+  delaunay: Delaunay<Point2D>,
+  colorMap = temperatureColorMap
+) {
+  return function temperatureColor(i: number) {
+    const colorMapIndex = Math.floor(
+      map_range(i, 0, delaunay.triangles.length, 0, temperatureColorMap.length)
+    );
+    console.log(colorMapIndex);
+    const [r, g, b, a] = colorMap[colorMapIndex];
+    console.log(r, g, b, a);
+    return `rgba(${r},${g},${b},${a})`;
+  };
+}
 
 export function drawVoronoi(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext("2d");
@@ -65,27 +123,35 @@ export function drawVoronoi(canvas: HTMLCanvasElement) {
     ([x, y]) => [x - canvas.width * 0.5, y - canvas.height * 0.5] as Point2D
   );
   const delaunay: Delaunay<Point2D> = Delaunay.from(points);
+  // drawSimple(delaunay, ctx);
+
   const centroids = computeCentroids(delaunay);
-  centroids.forEach(([x, y]) => {
-    drawCircle(ctx, x, y, { color: "green", radius: 4 });
-  });
   drawCellBoundaries(ctx, delaunay, centroids);
-
-  const voronoi = delaunay.voronoi([0, 0, width, height]);
-  const polys = [...voronoi.cellPolygons()];
-  drawSimple(voronoi, ctx, "white");
-
-  polys.forEach((poly) => {
-    poly.forEach(([x, y]) => {
-      drawCircle(ctx, x, y, { color: "blue", radius: 4 });
-    });
+  centroids.forEach(([x, y]) => {
+    drawCircle(ctx, x, y, { color: "blue", radius: 4 });
   });
-  drawSimple(delaunay, ctx);
+
+  // const voronoi = delaunay.voronoi([0, 0, width, height]);
+  // drawSimple(voronoi, ctx, "white");
+
+  // const polys = [...voronoi.cellPolygons()];
+  // polys.forEach((poly) => {
+  //   poly.forEach(([x, y]) => {
+  //     drawCircle(ctx, x, y, { color: "blue", radius: 4 });
+  //   });
+  // });
+
   ctx.beginPath();
   ctx.fillStyle = "red";
   delaunay.renderPoints(ctx, 4);
   ctx.fill();
   ctx.closePath();
+
+  drawCellColors(
+    ctx,
+    delaunay,
+    colorBasedOnMap(delaunay, precipitationColorMap)
+  );
 
   // const subdividedPolys = polys.slice(0, 5).map((poly) => {
   //   return subdividePoints(poly);
