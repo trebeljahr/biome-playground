@@ -27,8 +27,12 @@ class SimplexAdapter {
 
 export const precipitationMap = new SimplexAdapter({
   seed: "precipitation",
+  scale: 600,
 });
-export const temperatureMap = new SimplexAdapter({ seed: "temperature" });
+export const temperatureMap = new SimplexAdapter({
+  seed: "temperature",
+  scale: 600,
+});
 export const displacementMap1 = new SimplexAdapter({
   seed: "displace1",
   scale: 3,

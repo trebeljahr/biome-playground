@@ -8,6 +8,7 @@ import {
 } from "./helpers";
 import { precipitationColorMap, temperatureColorMap } from "./colorMap";
 import { getBiomeRgb, getBiomeRgba } from "./colorPicker";
+import { maxDistance, minDistance } from "./poissonDiskSampling";
 
 interface Renderer {
   render(ctx: CanvasRenderingContext2D): void;
@@ -33,10 +34,11 @@ function triangleOfEdge(e) {
 function drawCellBoundaries(
   ctx: CanvasRenderingContext2D,
   delaunay: Delaunay<Point2D>,
-  providedCenters?: Point2D[]
+  providedCenters?: Point2D[],
+  color = "white"
 ) {
   ctx.lineWidth = 3;
-  ctx.strokeStyle = "white";
+  ctx.strokeStyle = color;
   const centers = providedCenters || computeCentroids(delaunay);
   for (let e = 0; e < delaunay.halfedges.length; e++) {
     if (e < delaunay.halfedges[e]) {
@@ -129,6 +131,8 @@ function colorBasedOnBiome(points: Point2D[]) {
   };
 }
 
+const delaunayTiles: Record<string, Delaunay<Point2D>> = {};
+
 export enum VoronoiModes {
   Biomes,
   Centroid,
@@ -154,10 +158,52 @@ export function drawVoronoi(
   ctx.fillStyle = "lightgrey";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const [width, height] = [canvas.width * 2, canvas.height * 2];
+  const subdivisions = 5;
+
+  const [width, height] = [
+    canvas.width / subdivisions,
+    canvas.height / subdivisions,
+  ];
+
   const points = initPointsPoisson(width, height).map(
-    ([x, y]) => [x - canvas.width * 0.5, y - canvas.height * 0.5] as Point2D
+    ([x, y]) => [x + width, y + height] as Point2D
   );
+
+  const minDistanceX = width / 10;
+  const minDistanceY = height / 10;
+
+  const pointsOnTheEdge = points.filter(([x, y]) => {
+    if (x - minDistanceX < width) {
+      drawCircle(ctx, x, y, { color: "green", radius: 8 });
+      return true;
+    }
+    if (y - minDistanceY < height) {
+      drawCircle(ctx, x, y, { color: "limegreen", radius: 9 });
+      return true;
+    }
+    if (x + minDistanceY > width + width) {
+      drawCircle(ctx, x, y, { color: "yellow", radius: 10 });
+      return true;
+    }
+    if (y + minDistanceY > height + height) {
+      drawCircle(ctx, x, y, { color: "orange", radius: 11 });
+
+      return true;
+    }
+    return false;
+  });
+
+  const points2 = initPointsPoisson(width, height)
+    .map(([x, y]) => [x + width, y] as Point2D)
+    .concat(points); //.filter(([, y]) => y - minDistanceY < height));
+  const delaunay2: Delaunay<Point2D> = Delaunay.from(points2);
+  const centroids = computeCentroids(delaunay2);
+  drawCellBoundaries(ctx, delaunay2, centroids, "green");
+  centroids.forEach(([x, y]) => {
+    drawCircle(ctx, x, y, { color: "blue", radius: 4 });
+  });
+  drawDelaunayPoints(ctx, delaunay2);
+
   const delaunay: Delaunay<Point2D> = Delaunay.from(points);
 
   switch (mode) {
