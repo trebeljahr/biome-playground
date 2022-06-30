@@ -52,13 +52,17 @@ function drawCellBoundaries(
   }
 }
 
-function computeCentroids(delaunay: Delaunay<Point2D>) {
-  return [...delaunay.trianglePolygons()].map((triangle) => {
-    const [[x1, y1], [x2, y2], [x3, y3]] = triangle;
-    const centroid: Point2D = [(x1 + x2 + x3) / 3, (y1 + y2 + y3) / 3];
-    return centroid;
-  });
+type Triangle = [Point2D, Point2D, Point2D];
+function computeCentroid(triangle: Triangle) {
+  const [[x1, y1], [x2, y2], [x3, y3]] = triangle;
+  const centroid: Point2D = [(x1 + x2 + x3) / 3, (y1 + y2 + y3) / 3];
+  return centroid;
 }
+
+function computeCentroids(delaunay: Delaunay<Point2D>) {
+  return [...delaunay.trianglePolygons()].map(computeCentroid);
+}
+
 function nextHalfedge(e: number) {
   return e % 3 === 2 ? e - 2 : e + 1;
 }
@@ -150,6 +154,25 @@ function drawDelaunayPoints(
   ctx.closePath();
 }
 
+const subdivisions = 5;
+let lowerEdge: number = -1;
+let upperEdge: number = subdivisions;
+
+document.addEventListener("keypress", (event) => {
+  event.code === "KeyV" && lowerEdge--;
+  event.code === "KeyB" && lowerEdge++;
+
+  event.code === "KeyN" && upperEdge--;
+  event.code === "KeyM" && upperEdge++;
+
+  console.log(lowerEdge, upperEdge);
+  if (["KeyV", "KeyB", "KeyN", "KeyM"].includes(event.code)) {
+    drawVoronoi(document.getElementById("canvas") as HTMLCanvasElement);
+  }
+});
+
+let allPoints: Record<string, Point2D[]> = {};
+
 export function drawVoronoi(
   canvas: HTMLCanvasElement,
   mode: VoronoiModes = VoronoiModes.Centroid
@@ -158,39 +181,34 @@ export function drawVoronoi(
   ctx.fillStyle = "lightgrey";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const subdivisions = 5;
-
   const [width, height] = [
     canvas.width / subdivisions,
     canvas.height / subdivisions,
   ];
 
-  const allPoints: Record<string, Point2D[]> = {};
-  for (let i = 0; i < subdivisions; i++) {
-    for (let j = 0; j < subdivisions; j++) {
-      allPoints[`${i},${j}`] = initPointsPoisson(width, height).map(
-        ([x, y]) => [x + i * width, y + j * height] as Point2D
-      );
+  for (let i = lowerEdge; i <= upperEdge; i++) {
+    for (let j = lowerEdge; j <= upperEdge; j++) {
+      if (!allPoints[`${i},${j}`]) {
+        allPoints[`${i},${j}`] = initPointsPoisson(width, height).map(
+          ([x, y]) => [x + i * width, y + j * height] as Point2D
+        );
+      }
     }
   }
-
-  console.log(allPoints);
-  console.log(Object.keys(allPoints).length);
 
   Object.keys(allPoints).map((key) => {
     const [xOff, yOff] = key.split(",").map((strNum) => parseInt(strNum));
     if (
-      xOff !== 0 &&
-      yOff !== 0 &&
-      xOff !== subdivisions - 1 &&
-      yOff !== subdivisions - 1
+      xOff > lowerEdge &&
+      yOff > lowerEdge &&
+      xOff < upperEdge &&
+      yOff < upperEdge
     ) {
       const points: Point2D[] = [];
 
       for (let i = -1; i <= 1; i++) {
         for (let j = -1; j <= 1; j++) {
           const keyWithOffset = `${i + xOff},${j + yOff}`;
-          console.log(keyWithOffset);
           points.push(...allPoints[keyWithOffset]);
         }
       }
@@ -201,7 +219,38 @@ export function drawVoronoi(
         width * (xOff + 1),
         height * (yOff + 1),
       ]);
-      drawSimple(voronoi, ctx);
+      // drawSimple(voronoi, ctx);
+      const polys = [...voronoi.cellPolygons()];
+      polys.forEach((poly, i) => {
+        console.log(poly);
+        console.log(poly.index);
+        const triangle = delaunay.trianglePolygon(poly.index) as Triangle;
+        console.log(triangle);
+        const [x, y] = computeCentroid(triangle);
+        ctx.fillStyle = ctx.strokeStyle = convertRGBAToStringRGBA(
+          getBiomeRgba(x, y)
+        );
+        ctx.beginPath();
+
+        const [startX, startY] = poly[0];
+        ctx.moveTo(startX, startY);
+
+        for (let [x, y] of poly) {
+          ctx.lineWidth = 1;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.fill();
+        ctx.closePath();
+
+        // poly.forEach(([x, y]) => {
+        //   drawCircle(ctx, x, y, { color: "blue", radius: 4 });
+        // });
+      });
+
+      // delaunay.points.forEach() {
+
+      // }
       // const centroids = computeCentroids(delaunay);
       // drawCellBoundaries(ctx, delaunay, centroids, "green");
     }
@@ -270,13 +319,6 @@ export function drawVoronoi(
 
   // const voronoi = delaunay.voronoi([0, 0, width, height]);
   // drawSimple(voronoi, ctx, "white");
-
-  // const polys = [...voronoi.cellPolygons()];
-  // polys.forEach((poly) => {
-  //   poly.forEach(([x, y]) => {
-  //     drawCircle(ctx, x, y, { color: "blue", radius: 4 });
-  //   });
-  // });
 
   // const subdividedPolys = polys.slice(0, 5).map((poly) => {
   //   return subdividePoints(poly);
