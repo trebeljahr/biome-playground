@@ -165,66 +165,108 @@ export function drawVoronoi(
     canvas.height / subdivisions,
   ];
 
-  const points = initPointsPoisson(width, height).map(
-    ([x, y]) => [x + width, y + height] as Point2D
-  );
-
-  const minDistanceX = width / 10;
-  const minDistanceY = height / 10;
-
-  const pointsOnTheEdge = points.filter(([x, y]) => {
-    if (x - minDistanceX < width) {
-      drawCircle(ctx, x, y, { color: "green", radius: 8 });
-      return true;
+  const allPoints: Record<string, Point2D[]> = {};
+  for (let i = 0; i < subdivisions; i++) {
+    for (let j = 0; j < subdivisions; j++) {
+      allPoints[`${i},${j}`] = initPointsPoisson(width, height).map(
+        ([x, y]) => [x + i * width, y + j * height] as Point2D
+      );
     }
-    if (y - minDistanceY < height) {
-      drawCircle(ctx, x, y, { color: "limegreen", radius: 9 });
-      return true;
-    }
-    if (x + minDistanceY > width + width) {
-      drawCircle(ctx, x, y, { color: "yellow", radius: 10 });
-      return true;
-    }
-    if (y + minDistanceY > height + height) {
-      drawCircle(ctx, x, y, { color: "orange", radius: 11 });
-
-      return true;
-    }
-    return false;
-  });
-
-  const points2 = initPointsPoisson(width, height)
-    .map(([x, y]) => [x + width, y] as Point2D)
-    .concat(points); //.filter(([, y]) => y - minDistanceY < height));
-  const delaunay2: Delaunay<Point2D> = Delaunay.from(points2);
-  const centroids = computeCentroids(delaunay2);
-  drawCellBoundaries(ctx, delaunay2, centroids, "green");
-  centroids.forEach(([x, y]) => {
-    drawCircle(ctx, x, y, { color: "blue", radius: 4 });
-  });
-  drawDelaunayPoints(ctx, delaunay2);
-
-  const delaunay: Delaunay<Point2D> = Delaunay.from(points);
-
-  switch (mode) {
-    case VoronoiModes.Biomes:
-      drawCellColors(ctx, delaunay, colorBasedOnBiome(points));
-      break;
-    case VoronoiModes.Centroid:
-      const centroids = computeCentroids(delaunay);
-      drawCellBoundaries(ctx, delaunay, centroids);
-      centroids.forEach(([x, y]) => {
-        drawCircle(ctx, x, y, { color: "blue", radius: 4 });
-      });
-      drawDelaunayPoints(ctx, delaunay);
-
-      break;
-    case VoronoiModes.Delaunay:
-      drawSimple(delaunay, ctx);
-      drawDelaunayPoints(ctx, delaunay);
-
-      break;
   }
+
+  console.log(allPoints);
+  console.log(Object.keys(allPoints).length);
+
+  Object.keys(allPoints).map((key) => {
+    const [xOff, yOff] = key.split(",").map((strNum) => parseInt(strNum));
+    if (
+      xOff !== 0 &&
+      yOff !== 0 &&
+      xOff !== subdivisions - 1 &&
+      yOff !== subdivisions - 1
+    ) {
+      const points: Point2D[] = [];
+
+      for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+          const keyWithOffset = `${i + xOff},${j + yOff}`;
+          console.log(keyWithOffset);
+          points.push(...allPoints[keyWithOffset]);
+        }
+      }
+      const delaunay: Delaunay<Point2D> = Delaunay.from(points);
+      const voronoi = delaunay.voronoi([
+        width * xOff,
+        height * yOff,
+        width * (xOff + 1),
+        height * (yOff + 1),
+      ]);
+      drawSimple(voronoi, ctx);
+      // const centroids = computeCentroids(delaunay);
+      // drawCellBoundaries(ctx, delaunay, centroids, "green");
+    }
+  });
+
+  // const points = initPointsPoisson(width, height).map(
+  //   ([x, y]) => [x + width, y + height] as Point2D
+  // );
+
+  // const minDistanceX = width / 10;
+  // const minDistanceY = height / 10;
+
+  // const pointsOnTheEdge = points.filter(([x, y]) => {
+  //   if (x - minDistanceX < width) {
+  //     drawCircle(ctx, x, y, { color: "green", radius: 8 });
+  //     return true;
+  //   }
+  //   if (y - minDistanceY < height) {
+  //     drawCircle(ctx, x, y, { color: "limegreen", radius: 9 });
+  //     return true;
+  //   }
+  //   if (x + minDistanceY > width + width) {
+  //     drawCircle(ctx, x, y, { color: "yellow", radius: 10 });
+  //     return true;
+  //   }
+  //   if (y + minDistanceY > height + height) {
+  //     drawCircle(ctx, x, y, { color: "orange", radius: 11 });
+
+  //     return true;
+  //   }
+  //   return false;
+  // });
+
+  // const points2 = initPointsPoisson(width, height)
+  //   .map(([x, y]) => [x + width, y] as Point2D)
+  //   .concat(points); //.filter(([, y]) => y - minDistanceY < height));
+  // const delaunay2: Delaunay<Point2D> = Delaunay.from(points2);
+  // const centroids = computeCentroids(delaunay2);
+  // drawCellBoundaries(ctx, delaunay2, centroids, "green");
+  // centroids.forEach(([x, y]) => {
+  //   drawCircle(ctx, x, y, { color: "blue", radius: 4 });
+  // });
+  // drawDelaunayPoints(ctx, delaunay2);
+
+  // const delaunay: Delaunay<Point2D> = Delaunay.from(points);
+
+  // switch (mode) {
+  //   case VoronoiModes.Biomes:
+  //     drawCellColors(ctx, delaunay, colorBasedOnBiome(points));
+  //     break;
+  //   case VoronoiModes.Centroid:
+  //     const centroids = computeCentroids(delaunay);
+  //     drawCellBoundaries(ctx, delaunay, centroids);
+  //     centroids.forEach(([x, y]) => {
+  //       drawCircle(ctx, x, y, { color: "blue", radius: 4 });
+  //     });
+  //     drawDelaunayPoints(ctx, delaunay);
+
+  //     break;
+  //   case VoronoiModes.Delaunay:
+  //     drawSimple(delaunay, ctx);
+  //     drawDelaunayPoints(ctx, delaunay);
+
+  //     break;
+  // }
 
   // const voronoi = delaunay.voronoi([0, 0, width, height]);
   // drawSimple(voronoi, ctx, "white");
