@@ -87,6 +87,7 @@ function drawCellColors(
       );
       ctx.strokeStyle = ctx.fillStyle = colorFn(r);
       ctx.beginPath();
+      ctx.lineWidth = 1;
       const [xStart, yStart] = vertices[0];
       ctx.moveTo(xStart, yStart);
       for (let i = 1; i < vertices.length; i++) {
@@ -128,7 +129,27 @@ function colorBasedOnBiome(points: Point2D[]) {
   };
 }
 
-export function drawVoronoi(canvas: HTMLCanvasElement) {
+export enum VoronoiModes {
+  Biomes,
+  Centroid,
+  Delaunay,
+}
+
+function drawDelaunayPoints(
+  ctx: CanvasRenderingContext2D,
+  delaunay: Delaunay<Point2D>
+) {
+  ctx.beginPath();
+  ctx.fillStyle = "red";
+  delaunay.renderPoints(ctx, 4);
+  ctx.fill();
+  ctx.closePath();
+}
+
+export function drawVoronoi(
+  canvas: HTMLCanvasElement,
+  mode: VoronoiModes = VoronoiModes.Centroid
+) {
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "lightgrey";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -138,13 +159,26 @@ export function drawVoronoi(canvas: HTMLCanvasElement) {
     ([x, y]) => [x - canvas.width * 0.5, y - canvas.height * 0.5] as Point2D
   );
   const delaunay: Delaunay<Point2D> = Delaunay.from(points);
-  // drawSimple(delaunay, ctx);
 
-  // const centroids = computeCentroids(delaunay);
-  // drawCellBoundaries(ctx, delaunay, centroids);
-  // centroids.forEach(([x, y]) => {
-  //   drawCircle(ctx, x, y, { color: "blue", radius: 4 });
-  // });
+  switch (mode) {
+    case VoronoiModes.Biomes:
+      drawCellColors(ctx, delaunay, colorBasedOnBiome(points));
+      break;
+    case VoronoiModes.Centroid:
+      const centroids = computeCentroids(delaunay);
+      drawCellBoundaries(ctx, delaunay, centroids);
+      centroids.forEach(([x, y]) => {
+        drawCircle(ctx, x, y, { color: "blue", radius: 4 });
+      });
+      drawDelaunayPoints(ctx, delaunay);
+
+      break;
+    case VoronoiModes.Delaunay:
+      drawSimple(delaunay, ctx);
+      drawDelaunayPoints(ctx, delaunay);
+
+      break;
+  }
 
   // const voronoi = delaunay.voronoi([0, 0, width, height]);
   // drawSimple(voronoi, ctx, "white");
@@ -155,14 +189,6 @@ export function drawVoronoi(canvas: HTMLCanvasElement) {
   //     drawCircle(ctx, x, y, { color: "blue", radius: 4 });
   //   });
   // });
-
-  // ctx.beginPath();
-  // ctx.fillStyle = "red";
-  // delaunay.renderPoints(ctx, 4);
-  // ctx.fill();
-  // ctx.closePath();
-
-  drawCellColors(ctx, delaunay, colorBasedOnBiome(points));
 
   // const subdividedPolys = polys.slice(0, 5).map((poly) => {
   //   return subdividePoints(poly);

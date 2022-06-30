@@ -9,13 +9,13 @@ import {
 } from "./biomePlayground";
 import { clamp, map_range } from "./helpers";
 import {
-  NoisePicker,
+  NoiseSampler,
   precipitationNoise,
   precipitationMap,
   temperatureNoise,
   temperatureMap,
 } from "./noise";
-import { drawVoronoi } from "./ voronoi";
+import { drawVoronoi, VoronoiModes } from "./ voronoi";
 import {
   precipitationColorMap,
   RGBAColorMap,
@@ -23,7 +23,7 @@ import {
 } from "./colorMap";
 import * as dat from "dat.gui";
 import {
-  ColorPicker,
+  ColorSampler,
   getBiomeRgb,
   getNoiseRgbPicker,
   getPrecipitationRgb,
@@ -55,12 +55,7 @@ canvas.addEventListener("mousedown", function (e) {
 
 const ctx = canvas.getContext("2d");
 
-console.log(canvas.width);
-console.log(canvas.height);
-console.log(window.innerWidth);
-console.log(window.innerHeight);
-
-function drawNoise(pickRgb: ColorPicker, offsetX = 0, offsetY = 0) {
+function drawNoise(pickRgb: ColorSampler, offsetX = 0, offsetY = 0) {
   let noiseArr: number[] = [];
   let iterations = 0;
   for (let i = 0; i < arr.length; i += 4) {
@@ -90,8 +85,10 @@ const gui = new dat.GUI({ name: "Biome Playground" });
 const parameters: Record<string, { on: boolean; draw: () => void }> = {
   PrecipitationMap: { on: false, draw: drawPrecipitationMap },
   TemperatureMap: { on: false, draw: drawTemperatureMap },
-  Voronoi: { on: true, draw: drawVoronoiMap },
-  Biomes: { on: false, draw: drawBiomeMap },
+  Voronoi: { on: true, draw: drawVoronoiCentroidMap },
+  Delaunay: { on: false, draw: drawDelaunyTriangulation },
+  NoiseBasedBiomes: { on: false, draw: drawBiomeMap },
+  VoronoiBasedBiomes: { on: false, draw: drawVoronoiBiomes },
   BiomeChart: { on: false, draw: drawBiomeDistributionChart },
 };
 
@@ -133,8 +130,16 @@ function drawOutline(
   ctx.strokeRect(x, y, width, height);
 }
 
-function drawVoronoiMap() {
-  drawVoronoi(canvas);
+function drawVoronoiBiomes() {
+  drawVoronoi(canvas, VoronoiModes.Biomes);
+}
+
+function drawVoronoiCentroidMap() {
+  drawVoronoi(canvas, VoronoiModes.Centroid);
+}
+
+function drawDelaunyTriangulation() {
+  drawVoronoi(canvas, VoronoiModes.Delaunay);
 }
 
 function drawTemperatureMap() {
@@ -204,7 +209,7 @@ function drawBiomeDistributionChart() {
 
 const gridCells = 10;
 
-function colorNoiseDistribution(colorPicker: ColorPicker) {
+function colorNoiseDistribution(colorPicker: ColorSampler) {
   for (let i = 0; i < gridCells; i++) {
     for (let j = 0; j < gridCells; j++) {
       drawNoise(colorPicker, i, j);

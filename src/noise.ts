@@ -3,7 +3,7 @@ import Module from "libnoise-ts/module/Module";
 import { Plane } from "libnoise-ts/model";
 import SimplexNoise from "simplex-noise";
 
-export interface NoisePicker {
+export interface NoiseSampler {
   getValue(x: number, y: number): number;
 }
 
