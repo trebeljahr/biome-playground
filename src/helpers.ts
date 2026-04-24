@@ -3,21 +3,14 @@ import { getPoisson } from "./poissonDiskSampling";
 
 export type Point2D = [number, number];
 
-export function map_range(
-  value: number,
-  low1: number,
-  high1: number,
-  low2: number,
-  high2: number
-) {
+export function map_range(value: number, low1: number, high1: number, low2: number, high2: number) {
   return low2 + ((high2 - low2) * (value - low1)) / (high1 - low1);
 }
 
 const scale = 10;
 export function subdivideEdge([x1, y1]: Point2D, [x2, y2]: Point2D) {
   // subdivisions: number = 10
-  const subdivisionCount =
-    distanceSquared([x1, y1], [x2, y2]) / (scale * scale);
+  const subdivisionCount = distanceSquared([x1, y1], [x2, y2]) / (scale * scale);
   // console.log(subdivisionCount);
   const newPoints: Point2D[] = [];
   for (let i = 0; i < subdivisionCount; i++) {
@@ -37,7 +30,7 @@ export function drawCircle(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  { radius = 1, color = "black" }
+  { radius = 1, color = "black" },
 ) {
   ctx.beginPath();
   ctx.fillStyle = color;
@@ -83,19 +76,14 @@ function testingSets() {
   console.log({ a: subdividePoints(pointsA) });
   console.log({ b: subdividePoints(pointsB) });
 
-  const pointsASet = new Set(
-    subdividePoints(pointsA).map((point) => JSON.stringify(point))
-  );
-  const pointsBSet = new Set(
-    subdividePoints(pointsB).map((point) => JSON.stringify(point))
-  );
+  const pointsASet = new Set(subdividePoints(pointsA).map((point) => JSON.stringify(point)));
+  const pointsBSet = new Set(subdividePoints(pointsB).map((point) => JSON.stringify(point)));
 
   console.log({ pointsASet });
   console.log({ pointsBSet });
 
   const areEqual =
-    [...pointsASet].every((point) => pointsBSet.has(point)) &&
-    pointsASet.size === pointsBSet.size;
+    [...pointsASet].every((point) => pointsBSet.has(point)) && pointsASet.size === pointsBSet.size;
   console.log("Are Equal?", areEqual);
 }
 
@@ -114,9 +102,9 @@ export function distanceSquared([x1, y1]: Point2D, [x2, y2]: Point2D) {
 }
 
 function lineFromPoints(P: Point2D, Q: Point2D) {
-  let a = Q[1] - P[1];
-  let b = P[0] - Q[0];
-  let c = a * P[0] + b * P[1];
+  const a = Q[1] - P[1];
+  const b = P[0] - Q[0];
+  const c = a * P[0] + b * P[1];
   return [a, b, c];
 }
 
@@ -124,33 +112,33 @@ function lineFromPoints(P: Point2D, Q: Point2D) {
 // perpendicular bisector. It also inputs the points
 // whose mid-point lies on the bisector
 function perpendicularBisectorFromLine(P, Q, a, b, c) {
-  let mid_point = [(P[0] + Q[0]) / 2, (P[1] + Q[1]) / 2];
+  const mid_point = [(P[0] + Q[0]) / 2, (P[1] + Q[1]) / 2];
 
   // c = -bx + ay
   c = -b * mid_point[0] + a * mid_point[1];
 
-  let temp = a;
+  const temp = a;
   a = -b;
   b = temp;
   return [a, b, c];
 }
 
 export function groupByN<T>(n: number, data: T[]) {
-  let result: T[][] = [];
+  const result: T[][] = [];
   for (let i = 0; i < data.length; i += n) result.push(data.slice(i, i + n));
   return result;
 }
 
 // Returns the intersection point of two lines
 function lineLineIntersection(a1, b1, c1, a2, b2, c2) {
-  let determinant = a1 * b2 - a2 * b1;
+  const determinant = a1 * b2 - a2 * b1;
   if (determinant == 0) {
     // The lines are parallel. This is simplified
     // by returning a pair of FLT_MAX
     return [10.0 ** 19, 10.0 ** 19] as Point2D;
   } else {
-    let x = (b2 * c1 - b1 * c2) / determinant;
-    let y = (a1 * c2 - a2 * c1) / determinant;
+    const x = (b2 * c1 - b1 * c2) / determinant;
+    const y = (a1 * c2 - a2 * c1) / determinant;
     return [x, y] as Point2D;
   }
 }
@@ -159,13 +147,13 @@ export type Triangle = [Point2D, Point2D, Point2D];
 
 export function findCircumCenter([P, Q, R]: Triangle) {
   // Line PQ is represented as ax + by = c
-  let PQ_line = lineFromPoints(P, Q);
+  const PQ_line = lineFromPoints(P, Q);
   let a = PQ_line[0];
   let b = PQ_line[1];
   let c = PQ_line[2];
 
   // Line QR is represented as ex + fy = g
-  let QR_line = lineFromPoints(Q, R);
+  const QR_line = lineFromPoints(Q, R);
   let e = QR_line[0];
   let f = QR_line[1];
   let g = QR_line[2];
@@ -173,19 +161,19 @@ export function findCircumCenter([P, Q, R]: Triangle) {
   // Converting lines PQ and QR to perpendicular
   // vbisectors. After this, L = ax + by = c
   // M = ex + fy = g
-  let PQ_perpendicular = perpendicularBisectorFromLine(P, Q, a, b, c);
+  const PQ_perpendicular = perpendicularBisectorFromLine(P, Q, a, b, c);
   a = PQ_perpendicular[0];
   b = PQ_perpendicular[1];
   c = PQ_perpendicular[2];
 
-  let QR_perpendicular = perpendicularBisectorFromLine(Q, R, e, f, g);
+  const QR_perpendicular = perpendicularBisectorFromLine(Q, R, e, f, g);
   e = QR_perpendicular[0];
   f = QR_perpendicular[1];
   g = QR_perpendicular[2];
 
   // The point of intersection of L and M gives
   // the circumcenter
-  let circumcenter: Point2D = lineLineIntersection(a, b, c, e, f, g);
+  const circumcenter: Point2D = lineLineIntersection(a, b, c, e, f, g);
 
   return circumcenter;
 }

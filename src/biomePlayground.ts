@@ -14,20 +14,13 @@ interface Biome {
 }
 
 let counter = 0;
-export function determineBiome(
-  noise1: number,
-  noise2: number
-): Biome | undefined {
+export function determineBiome(noise1: number, noise2: number): Biome | undefined {
   const temperature = clamp(
     Math.floor(map_range(noise1, -1, 1, lowestTemperature, highestTemperature)),
     lowestTemperature + 1,
-    highestTemperature
+    highestTemperature,
   );
-  const precipitation = clamp(
-    Math.floor(map_range(noise2, -1, 1, 0, 100)),
-    1,
-    100
-  );
+  const precipitation = clamp(Math.floor(map_range(noise2, -1, 1, 0, 100)), 1, 100);
   const biome = biomes.find((biome) => {
     return (
       temperature > biome.temperature.min &&
@@ -179,5 +172,5 @@ console.log(
     const rgb = window.getComputedStyle(d).color;
     document.body.removeChild(d);
     return { ...biome, rgb };
-  })
+  }),
 );

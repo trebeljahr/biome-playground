@@ -1,24 +1,14 @@
-import { Delaunay, Voronoi } from "d3-delaunay";
-import { findCircumCenter, groupByN, map_range, Triangle } from "./helpers";
-import {
-  drawCircle,
-  initPointsPoisson,
-  Point2D,
-  subdividePoints,
-} from "./helpers";
-import { precipitationColorMap, temperatureColorMap } from "./colorMap";
-import { getBiomeRgb, getBiomeRgba } from "./colorPicker";
-import { maxDistance, minDistance } from "./poissonDiskSampling";
+import { Delaunay } from "d3-delaunay";
+import { temperatureColorMap } from "./colorMap";
+import { getBiomeRgba } from "./colorPicker";
+import { type Triangle, map_range } from "./helpers";
+import { type Point2D, initPointsPoisson } from "./helpers";
 
 interface Renderer {
   render(ctx: CanvasRenderingContext2D): void;
 }
 
-function drawSimple(
-  thingToRender: Renderer,
-  ctx: CanvasRenderingContext2D,
-  color = "black"
-) {
+function drawSimple(thingToRender: Renderer, ctx: CanvasRenderingContext2D, color = "black") {
   ctx.beginPath();
   ctx.strokeStyle = color;
   ctx.lineWidth = 3;
@@ -35,7 +25,7 @@ function drawCellBoundaries(
   ctx: CanvasRenderingContext2D,
   delaunay: Delaunay<Point2D>,
   providedCenters?: Point2D[],
-  color = "white"
+  color = "white",
 ) {
   ctx.lineWidth = 3;
   ctx.strokeStyle = color;
@@ -80,15 +70,15 @@ function edgesAroundPoint(delaunay: Delaunay<Point2D>, start: number) {
 function drawCellColors(
   ctx: CanvasRenderingContext2D,
   delaunay: Delaunay<Point2D>,
-  colorFn: (index: number) => string
+  colorFn: (index: number) => string,
 ) {
-  let seen = new Set(); // of region ids
+  const seen = new Set(); // of region ids
   for (let e = 0; e < delaunay.halfedges.length; e++) {
     const r = delaunay.triangles[nextHalfedge(e)];
     if (!seen.has(r)) {
       seen.add(r);
-      let vertices = edgesAroundPoint(delaunay, e).map(
-        (e) => computeCentroids(delaunay)[triangleOfEdge(e)]
+      const vertices = edgesAroundPoint(delaunay, e).map(
+        (e) => computeCentroids(delaunay)[triangleOfEdge(e)],
       );
       ctx.strokeStyle = ctx.fillStyle = colorFn(r);
       ctx.beginPath();
@@ -107,24 +97,16 @@ function drawCellColors(
   }
 }
 
-function colorBasedOnMap(
-  delaunay: Delaunay<Point2D>,
-  colorMap = temperatureColorMap
-) {
+function colorBasedOnMap(delaunay: Delaunay<Point2D>, colorMap = temperatureColorMap) {
   return function temperatureColor(i: number) {
     const colorMapIndex = Math.floor(
-      map_range(i, 0, delaunay.triangles.length, 0, temperatureColorMap.length)
+      map_range(i, 0, delaunay.triangles.length, 0, temperatureColorMap.length),
     );
     return convertRGBAToStringRGBA(colorMap[colorMapIndex]);
   };
 }
 
-function convertRGBAToStringRGBA([r, g, b, a]: [
-  number,
-  number,
-  number,
-  number
-]) {
+function convertRGBAToStringRGBA([r, g, b, a]: [number, number, number, number]) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
@@ -138,15 +120,12 @@ function colorBasedOnBiome(points: Point2D[]) {
 const delaunayTiles: Record<string, Delaunay<Point2D>> = {};
 
 export enum VoronoiModes {
-  Biomes,
-  Centroid,
-  Delaunay,
+  Biomes = 0,
+  Centroid = 1,
+  Delaunay = 2,
 }
 
-function drawDelaunayPoints(
-  ctx: CanvasRenderingContext2D,
-  delaunay: Delaunay<Point2D>
-) {
+function drawDelaunayPoints(ctx: CanvasRenderingContext2D, delaunay: Delaunay<Point2D>) {
   ctx.beginPath();
   ctx.fillStyle = "red";
   delaunay.renderPoints(ctx, 4);
@@ -155,7 +134,7 @@ function drawDelaunayPoints(
 }
 
 const subdivisions = 5;
-let lowerEdge: number = -1;
+let lowerEdge = -1;
 let upperEdge: number = subdivisions;
 
 document.addEventListener("keypress", (event) => {
@@ -171,40 +150,29 @@ document.addEventListener("keypress", (event) => {
   }
 });
 
-let allPoints: Record<string, Point2D[]> = {};
+const allPoints: Record<string, Point2D[]> = {};
 
-export function drawVoronoi(
-  canvas: HTMLCanvasElement,
-  mode: VoronoiModes = VoronoiModes.Centroid
-) {
+export function drawVoronoi(canvas: HTMLCanvasElement, mode: VoronoiModes = VoronoiModes.Centroid) {
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const [width, height] = [
-    canvas.width / subdivisions,
-    canvas.height / subdivisions,
-  ];
+  const [width, height] = [canvas.width / subdivisions, canvas.height / subdivisions];
 
   for (let i = lowerEdge; i <= upperEdge; i++) {
     for (let j = lowerEdge; j <= upperEdge; j++) {
       const key = `${i},${j}`;
       if (!allPoints[key]) {
         allPoints[key] = initPointsPoisson(width, height).map(
-          ([x, y]) => [x + i * width, y + j * height] as Point2D
+          ([x, y]) => [x + i * width, y + j * height] as Point2D,
         );
       }
     }
   }
 
   Object.keys(allPoints).forEach((key) => {
-    const [xOff, yOff] = key.split(",").map((strNum) => parseInt(strNum));
-    if (
-      xOff > lowerEdge &&
-      yOff > lowerEdge &&
-      xOff < upperEdge &&
-      yOff < upperEdge
-    ) {
+    const [xOff, yOff] = key.split(",").map((strNum) => Number.parseInt(strNum));
+    if (xOff > lowerEdge && yOff > lowerEdge && xOff < upperEdge && yOff < upperEdge) {
       const points: Point2D[] = [];
 
       for (let i = -1; i <= 1; i++) {
@@ -355,7 +323,7 @@ function drawMultiPoly(ctx: CanvasRenderingContext2D, polys: Point2D[][]) {
     // ctx.fillStyle = randomColor();
     ctx.beginPath();
 
-    for (let [x, y] of poly) {
+    for (const [x, y] of poly) {
       // ctx.fillRect(x, y, 5, 5);
       ctx.lineWidth = 1;
       if (i === 0) {

@@ -1,6 +1,6 @@
-import { Perlin } from "libnoise-ts/module/generator";
-import Module from "libnoise-ts/module/Module";
 import { Plane } from "libnoise-ts/model";
+import type Module from "libnoise-ts/module/Module";
+import { Perlin } from "libnoise-ts/module/generator";
 import SimplexNoise from "simplex-noise";
 
 export interface NoiseSampler {
@@ -18,10 +18,7 @@ class SimplexAdapter {
     this.scale = scale;
   }
   getValue(x: number, y: number) {
-    return this.simplex.noise2D(
-      shiftRight(x) / this.scale,
-      shiftRight(y) / this.scale
-    );
+    return this.simplex.noise2D(shiftRight(x) / this.scale, shiftRight(y) / this.scale);
   }
 }
 

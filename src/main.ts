@@ -1,4 +1,5 @@
 import "./main.css";
+import * as dat from "dat.gui";
 import {
   biomes,
   determineBiome,
@@ -7,44 +8,31 @@ import {
   lowestPrecipitation,
   lowestTemperature,
 } from "./biomePlayground";
-import { clamp, map_range } from "./helpers";
 import {
-  NoiseSampler,
-  precipitationNoise,
-  precipitationMap,
-  temperatureNoise,
-  temperatureMap,
-} from "./noise";
-import { drawVoronoi, VoronoiModes } from "./ voronoi";
-import {
-  precipitationColorMap,
-  RGBAColorMap,
-  temperatureColorMap,
-} from "./colorMap";
-import * as dat from "dat.gui";
-import {
-  ColorSampler,
+  type ColorSampler,
   getBiomeRgb,
-  getNoiseRgbPicker,
   getPrecipitationRgb,
   getTemperatureRgb,
 } from "./colorPicker";
+import { map_range } from "./helpers";
+import { precipitationNoise, temperatureNoise } from "./noise";
+import { VoronoiModes, drawVoronoi } from "./ voronoi";
 
 let gridCellWidth: number;
 let gridCellHeight: number;
 let arr: Uint8ClampedArray;
 
 function getMousePosition(event: MouseEvent) {
-  let rect = canvas.getBoundingClientRect();
-  let x = event.clientX - rect.left;
-  let y = event.clientY - rect.top;
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
   console.log("Coordinate x: " + x, "Coordinate y: " + y);
   return { x, y };
 }
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-canvas.addEventListener("mousedown", function (e) {
-  let { x, y } = getMousePosition(e);
+canvas.addEventListener("mousedown", (e) => {
+  const { x, y } = getMousePosition(e);
 
   const noise1 = temperatureNoise.getValue(x, y);
   const noise2 = precipitationNoise.getValue(x, y);
@@ -56,7 +44,7 @@ canvas.addEventListener("mousedown", function (e) {
 const ctx = canvas.getContext("2d");
 
 function drawNoise(pickRgb: ColorSampler, offsetX = 0, offsetY = 0) {
-  let noiseArr: number[] = [];
+  const noiseArr: number[] = [];
   let iterations = 0;
   for (let i = 0; i < arr.length; i += 4) {
     iterations++;
@@ -72,11 +60,7 @@ function drawNoise(pickRgb: ColorSampler, offsetX = 0, offsetY = 0) {
   }
 
   const imageData = new ImageData(arr, gridCellWidth, gridCellHeight);
-  ctx.putImageData(
-    imageData,
-    offsetX * gridCellWidth,
-    offsetY * gridCellHeight
-  );
+  ctx.putImageData(imageData, offsetX * gridCellWidth, offsetY * gridCellHeight);
   return noiseArr;
 }
 
@@ -112,19 +96,13 @@ function clearCanvas() {
 }
 
 function setChecked(key: string) {
-  for (let param in parameters) {
+  for (const param in parameters) {
     parameters[param].on = false;
   }
   parameters[key].on = true;
 }
 
-function drawOutline(
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  color?: string
-) {
+function drawOutline(x: number, y: number, width: number, height: number, color?: string) {
   ctx.strokeStyle = color || "black";
   ctx.lineWidth = 5;
   ctx.strokeRect(x, y, width, height);
@@ -161,43 +139,37 @@ function drawBiomeDistributionChart() {
       lowestTemperature,
       highestTemperature,
       0,
-      canvas.width
+      canvas.width,
     );
     const minTemp = map_range(
       temperature.min,
       lowestTemperature,
       highestTemperature,
       0,
-      canvas.width
+      canvas.width,
     );
     const maxHumid = map_range(
       precipitation.max,
       lowestPrecipitation,
       highestPrecipitation,
       0,
-      canvas.width
+      canvas.width,
     );
     const minHumid = map_range(
       precipitation.min,
       lowestPrecipitation,
       highestPrecipitation,
       0,
-      canvas.width
+      canvas.width,
     );
 
-    const y = map_range(
-      temperature.min,
-      lowestTemperature,
-      highestTemperature,
-      0,
-      canvas.width
-    );
+    const y = map_range(temperature.min, lowestTemperature, highestTemperature, 0, canvas.width);
     const x = map_range(
       precipitation.min,
       lowestPrecipitation,
       highestPrecipitation,
       0,
-      canvas.width
+      canvas.width,
     );
 
     drawOutline(x, y, maxHumid - minHumid, maxTemp - minTemp);
