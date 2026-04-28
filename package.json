@@ -6,6 +6,9 @@
   "main": "index.js",
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "webpack serve --open --config webpack.dev.js",
     "format": "biome format --write .",
@@ -37,7 +40,7 @@
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^4.9.2",
     "webpack-merge": "^4.2.1",
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "^2.4.13",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0"
   },
