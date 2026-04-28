@@ -1,5 +1,5 @@
 import { determineBiome } from "./biomePlayground";
-import { type RGBAColorMap, precipitationColorMap, temperatureColorMap } from "./colorMap";
+import { precipitationColorMap, type RGBAColorMap, temperatureColorMap } from "./colorMap";
 import { clamp, map_range } from "./helpers";
 import { type NoiseSampler, precipitationMap, temperatureMap } from "./noise";
 

@@ -1,6 +1,6 @@
 import { Plane } from "libnoise-ts/model";
-import type Module from "libnoise-ts/module/Module";
 import { Perlin } from "libnoise-ts/module/generator";
+import type Module from "libnoise-ts/module/Module";
 import SimplexNoise from "simplex-noise";
 
 export interface NoiseSampler {

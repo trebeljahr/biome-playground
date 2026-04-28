@@ -66,7 +66,7 @@ export function randomColor() {
   return "#" + Math.floor(Math.random() * 16777215).toString(16);
 }
 
-function testingSets() {
+function _testingSets() {
   const pointsA: Point2D[] = [
     [100, 200],
     [300, 400],
@@ -98,7 +98,7 @@ export function initPointsRandomly(width: number, height: number) {
 }
 
 export function distanceSquared([x1, y1]: Point2D, [x2, y2]: Point2D) {
-  return Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2);
+  return (x2 - x1) ** 2 + (y2 - y1) ** 2;
 }
 
 function lineFromPoints(P: Point2D, Q: Point2D) {
@@ -132,7 +132,7 @@ export function groupByN<T>(n: number, data: T[]) {
 // Returns the intersection point of two lines
 function lineLineIntersection(a1, b1, c1, a2, b2, c2) {
   const determinant = a1 * b2 - a2 * b1;
-  if (determinant == 0) {
+  if (determinant === 0) {
     // The lines are parallel. This is simplified
     // by returning a pair of FLT_MAX
     return [10.0 ** 19, 10.0 ** 19] as Point2D;

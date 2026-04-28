@@ -1,14 +1,13 @@
 import { Delaunay } from "d3-delaunay";
 import { temperatureColorMap } from "./colorMap";
 import { getBiomeRgba } from "./colorPicker";
-import { type Triangle, map_range } from "./helpers";
-import { type Point2D, initPointsPoisson } from "./helpers";
+import { initPointsPoisson, map_range, type Point2D, type Triangle } from "./helpers";
 
 interface Renderer {
   render(ctx: CanvasRenderingContext2D): void;
 }
 
-function drawSimple(thingToRender: Renderer, ctx: CanvasRenderingContext2D, color = "black") {
+function _drawSimple(thingToRender: Renderer, ctx: CanvasRenderingContext2D, color = "black") {
   ctx.beginPath();
   ctx.strokeStyle = color;
   ctx.lineWidth = 3;
@@ -21,7 +20,7 @@ function triangleOfEdge(e) {
   return Math.floor(e / 3);
 }
 
-function drawCellBoundaries(
+function _drawCellBoundaries(
   ctx: CanvasRenderingContext2D,
   delaunay: Delaunay<Point2D>,
   providedCenters?: Point2D[],
@@ -97,7 +96,7 @@ function drawCellColors(
   }
 }
 
-function colorBasedOnMap(delaunay: Delaunay<Point2D>, colorMap = temperatureColorMap) {
+function _colorBasedOnMap(delaunay: Delaunay<Point2D>, colorMap = temperatureColorMap) {
   return function temperatureColor(i: number) {
     const colorMapIndex = Math.floor(
       map_range(i, 0, delaunay.triangles.length, 0, temperatureColorMap.length),
@@ -117,7 +116,7 @@ function colorBasedOnBiome(points: Point2D[]) {
   };
 }
 
-const delaunayTiles: Record<string, Delaunay<Point2D>> = {};
+const _delaunayTiles: Record<string, Delaunay<Point2D>> = {};
 
 export enum VoronoiModes {
   Biomes = 0,
@@ -125,7 +124,7 @@ export enum VoronoiModes {
   Delaunay = 2,
 }
 
-function drawDelaunayPoints(ctx: CanvasRenderingContext2D, delaunay: Delaunay<Point2D>) {
+function _drawDelaunayPoints(ctx: CanvasRenderingContext2D, delaunay: Delaunay<Point2D>) {
   ctx.beginPath();
   ctx.fillStyle = "red";
   delaunay.renderPoints(ctx, 4);
@@ -152,7 +151,10 @@ document.addEventListener("keypress", (event) => {
 
 const allPoints: Record<string, Point2D[]> = {};
 
-export function drawVoronoi(canvas: HTMLCanvasElement, mode: VoronoiModes = VoronoiModes.Centroid) {
+export function drawVoronoi(
+  canvas: HTMLCanvasElement,
+  _mode: VoronoiModes = VoronoiModes.Centroid,
+) {
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -171,7 +173,7 @@ export function drawVoronoi(canvas: HTMLCanvasElement, mode: VoronoiModes = Voro
   }
 
   Object.keys(allPoints).forEach((key) => {
-    const [xOff, yOff] = key.split(",").map((strNum) => Number.parseInt(strNum));
+    const [xOff, yOff] = key.split(",").map((strNum) => Number.parseInt(strNum, 10));
     if (xOff > lowerEdge && yOff > lowerEdge && xOff < upperEdge && yOff < upperEdge) {
       const points: Point2D[] = [];
 
@@ -318,7 +320,7 @@ export function drawVoronoi(canvas: HTMLCanvasElement, mode: VoronoiModes = Voro
   // drawMultiPoly(ctx, polys.slice(0, 5));
 }
 
-function drawMultiPoly(ctx: CanvasRenderingContext2D, polys: Point2D[][]) {
+function _drawMultiPoly(ctx: CanvasRenderingContext2D, polys: Point2D[][]) {
   polys.forEach((poly, i) => {
     // ctx.fillStyle = randomColor();
     ctx.beginPath();
@@ -337,7 +339,7 @@ function drawMultiPoly(ctx: CanvasRenderingContext2D, polys: Point2D[][]) {
   });
 }
 
-function drawDeduplicated() {
+function _drawDeduplicated() {
   // const polyPoints = polys.flat(1);
   // const pointSet = new Set();
   // const dedupPolyPoints = polyPoints.filter((point) => {

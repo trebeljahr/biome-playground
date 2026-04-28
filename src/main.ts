@@ -1,5 +1,6 @@
 import "./main.css";
 import * as dat from "dat.gui";
+import { drawVoronoi, VoronoiModes } from "./ voronoi";
 import {
   biomes,
   determineBiome,
@@ -16,7 +17,6 @@ import {
 } from "./colorPicker";
 import { map_range } from "./helpers";
 import { precipitationNoise, temperatureNoise } from "./noise";
-import { VoronoiModes, drawVoronoi } from "./ voronoi";
 
 let gridCellWidth: number;
 let gridCellHeight: number;
