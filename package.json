@@ -11,6 +11,8 @@
   },
   "scripts": {
     "dev": "webpack serve --open --config webpack.dev.js",
+    "prebuild": "node scripts/generate-seo.mjs",
+    "build": "webpack --config webpack.prod.js",
     "format": "biome format --write .",
     "lint": "biome lint .",
     "check": "biome check --write .",

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Biome Playground - Procedural Terrain Generator</title>
+  <desc id="desc">Biome Playground procedural terrain preview</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#172554" />
+      <stop offset="0.45" stop-color="#166534" />
+      <stop offset="1" stop-color="#facc15" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#052e16" flood-opacity="0.4" />
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <g opacity="0.34" stroke="#ecfeff" stroke-width="3" fill="none">
+    <path d="M720 70 L865 124 L945 258 L908 420 L770 532 L602 512 L486 386 L498 206 Z" />
+    <path d="M865 124 L734 248 L945 258" />
+    <path d="M734 248 L602 512 L908 420" />
+    <path d="M486 386 L734 248 L498 206" />
+    <path d="M770 532 L734 248 L908 420" />
+  </g>
+  <g transform="translate(642 132)" filter="url(#shadow)">
+    <rect x="0" y="0" width="420" height="330" rx="28" fill="#f8fafc" />
+    <g>
+      <path d="M0 220 C70 170 132 260 198 190 S340 112 420 178 L420 330 L0 330 Z" fill="#4d7c0f" />
+      <path d="M0 122 C78 74 132 156 214 96 S348 52 420 88 L420 190 C336 124 282 214 198 190 S70 170 0 220 Z" fill="#22c55e" />
+      <path d="M0 0 L420 0 L420 88 C348 52 296 44 214 96 S78 74 0 122 Z" fill="#38bdf8" />
+      <path d="M76 264 C124 218 176 244 218 228 S318 206 372 248" stroke="#fef3c7" stroke-width="14" fill="none" stroke-linecap="round" opacity="0.9" />
+      <circle cx="112" cy="90" r="34" fill="#fde68a" />
+    </g>
+    <g stroke="#0f172a" stroke-width="5" opacity="0.18">
+      <path d="M0 110 L420 110" />
+      <path d="M0 220 L420 220" />
+      <path d="M140 0 L140 330" />
+      <path d="M280 0 L280 330" />
+    </g>
+  </g>
+  <text x="82" y="230" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="82" font-weight="900">Biome</text>
+  <text x="82" y="322" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="82" font-weight="900">Playground</text>
+  <text x="88" y="392" fill="#fef3c7" font-family="Inter, Arial, sans-serif" font-size="36" font-weight="800">Procedural Terrain Generator</text>
+  <text x="88" y="464" fill="#ecfeff" font-family="Inter, Arial, sans-serif" font-size="27">Temperature, precipitation, Voronoi cells,</text>
+  <text x="88" y="502" fill="#ecfeff" font-family="Inter, Arial, sans-serif" font-size="27">noise fields, and color palettes.</text>
+</svg>
